@@ -14,7 +14,8 @@ import { batchDownload } from '../utils/download.js'
 const state = {
   list: [],
   queryParam: 'format=jpg&name=large',
-  downloadBaseDir: ''
+  downloadBaseDir: '',
+  previewIndex: -1
 }
 
 const elements = {
@@ -26,8 +27,19 @@ const elements = {
   refresh: document.getElementById('refresh'),
   download: document.getElementById('download'),
   clear: document.getElementById('clear'),
+  usageGuide: document.getElementById('usageGuide'),
   queryParam: document.getElementById('queryParam'),
-  downloadDir: document.getElementById('downloadDir')
+  downloadDir: document.getElementById('downloadDir'),
+  modalOverlay: document.getElementById('modalOverlay'),
+  modalTitle: document.getElementById('modalTitle'),
+  modalClose: document.getElementById('modalClose'),
+  modalDownload: document.getElementById('modalDownload'),
+  modalDelete: document.getElementById('modalDelete'),
+  modalText: document.getElementById('modalText'),
+  modalImageWrap: document.getElementById('modalImageWrap'),
+  modalImage: document.getElementById('modalImage'),
+  modalPrev: document.getElementById('modalPrev'),
+  modalNext: document.getElementById('modalNext')
 }
 
 function shortenUrl(url) {
@@ -48,6 +60,174 @@ function toggleEmpty() {
   elements.empty.classList.toggle('show', state.list.length === 0)
 }
 
+function setModalVisible(visible) {
+  elements.modalOverlay.hidden = !visible
+  document.body.classList.toggle('modal-open', visible)
+}
+
+function closeModal() {
+  setModalVisible(false)
+  state.previewIndex = -1
+  elements.modalImage.removeAttribute('src')
+}
+
+function openGuideModal() {
+  state.previewIndex = -1
+  elements.modalTitle.textContent = '下载设置说明'
+  elements.modalText.innerHTML = `
+    <p>按下面 4 步设置后，批量下载会更顺畅：</p>
+    <ol>
+      <li>在浏览器地址栏打开 <code>chrome://settings/downloads</code>。</li>
+      <li>关闭“下载前询问每个文件的保存位置（Ask where to save each file before downloading）”。</li>
+      <li>回到插件页面，在“下载目录”填写你想要的子目录（例如 <code>image-collector</code>）；留空就使用系统默认下载目录。</li>
+      <li>打开 <code>chrome://extensions/</code>，点击本插件“重新加载”后再测试下载。</li>
+    </ol>
+  `
+  elements.modalText.classList.remove('is-hidden')
+  elements.modalImageWrap.classList.add('is-hidden')
+  elements.modalDownload.classList.add('is-hidden')
+  elements.modalDelete.classList.add('is-hidden')
+  elements.modalPrev.classList.add('is-hidden')
+  elements.modalNext.classList.add('is-hidden')
+  setModalVisible(true)
+}
+
+function getCurrentPreviewItem() {
+  if (state.previewIndex < 0 || state.previewIndex >= state.list.length) return null
+  return state.list[state.previewIndex]
+}
+
+function updatePreviewNavState() {
+  const hasPrev = state.previewIndex > 0
+  const hasNext = state.previewIndex >= 0 && state.previewIndex < state.list.length - 1
+
+  elements.modalPrev.disabled = !hasPrev
+  elements.modalNext.disabled = !hasNext
+}
+
+function openImageModalByIndex(index) {
+  if (index < 0 || index >= state.list.length) return
+
+  state.previewIndex = index
+  const item = state.list[index]
+  elements.modalTitle.textContent = `图片预览 (${index + 1}/${state.list.length})`
+  elements.modalImage.src = item.url
+  elements.modalImage.alt = item.url
+  elements.modalText.classList.add('is-hidden')
+  elements.modalImageWrap.classList.remove('is-hidden')
+  elements.modalDownload.classList.remove('is-hidden')
+  elements.modalDelete.classList.remove('is-hidden')
+  elements.modalPrev.classList.remove('is-hidden')
+  elements.modalNext.classList.remove('is-hidden')
+  updatePreviewNavState()
+  setModalVisible(true)
+}
+
+function openImageModalById(id) {
+  const index = state.list.findIndex((item) => item.id === id)
+  if (index < 0) return
+  openImageModalByIndex(index)
+}
+
+function handlePreviewStep(step) {
+  if (state.previewIndex < 0) return
+
+  const nextIndex = state.previewIndex + step
+  if (nextIndex < 0) {
+    alert('已经不存在上一张壁纸。')
+    return
+  }
+
+  if (nextIndex >= state.list.length) {
+    alert('已经不存在下一张壁纸。')
+    return
+  }
+
+  openImageModalByIndex(nextIndex)
+}
+
+async function handlePreviewDownload() {
+  const item = getCurrentPreviewItem()
+  if (!item) return
+
+  await handleSaveQueryParam()
+  await handleSaveDownloadBaseDir()
+
+  const result = await batchDownload([item], {
+    concurrency: 1,
+    queryParamOverride: state.queryParam,
+    folder: buildDownloadFolder()
+  })
+
+  if (result.successCount > 0) {
+    alert('当前壁纸下载成功。')
+    return
+  }
+
+  alert('当前壁纸下载失败，请稍后重试。')
+}
+
+async function handlePreviewDelete() {
+  const item = getCurrentPreviewItem()
+  if (!item) return
+
+  const shouldDelete = confirm('确认删除当前壁纸吗？')
+  if (!shouldDelete) return
+
+  const removedIndex = state.previewIndex
+  state.list = await removeById(item.id)
+  renderList()
+
+  if (state.list.length === 0) {
+    closeModal()
+    alert('已经不存在下一张壁纸或者上一张壁纸。')
+    return
+  }
+
+  if (removedIndex < state.list.length) {
+    openImageModalByIndex(removedIndex)
+    return
+  }
+
+  const prevIndex = state.list.length - 1
+  if (prevIndex >= 0) {
+    openImageModalByIndex(prevIndex)
+    alert('已不存在下一张壁纸，已切换到上一张壁纸。')
+    return
+  }
+
+  closeModal()
+  alert('已经不存在下一张壁纸或者上一张壁纸。')
+}
+
+function isImagePreviewOpen() {
+  return !elements.modalOverlay.hidden && !elements.modalImageWrap.classList.contains('is-hidden')
+}
+
+function handlePreviewHotkey(event) {
+  if (!isImagePreviewOpen()) return
+
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault()
+    handlePreviewStep(-1)
+    return
+  }
+
+  if (event.key === 'ArrowRight') {
+    event.preventDefault()
+    handlePreviewStep(1)
+  }
+}
+
+function handleGlobalKeydown(event) {
+  if (event.key === 'Escape' && !elements.modalOverlay.hidden) {
+    closeModal()
+    return
+  }
+
+  handlePreviewHotkey(event)
+}
+
 function createCard(item) {
   const card = document.createElement('article')
   card.className = 'card'
@@ -59,6 +239,9 @@ function createCard(item) {
   preview.src = item.preview || item.url
   preview.alt = item.url
   preview.loading = 'lazy'
+  preview.addEventListener('click', () => {
+    openImageModalById(item.id)
+  })
   previewWrap.appendChild(preview)
 
   const delButton = document.createElement('button')
@@ -226,6 +409,10 @@ function bindEvents() {
     handleRefresh()
   })
 
+  elements.usageGuide.addEventListener('click', () => {
+    openGuideModal()
+  })
+
   elements.queryParam.addEventListener('change', () => {
     handleSaveQueryParam()
   })
@@ -241,8 +428,37 @@ function bindEvents() {
   elements.downloadDir.addEventListener('blur', () => {
     handleSaveDownloadBaseDir()
   })
+
+  elements.modalClose.addEventListener('click', () => {
+    closeModal()
+  })
+
+  elements.modalDownload.addEventListener('click', () => {
+    handlePreviewDownload()
+  })
+
+  elements.modalDelete.addEventListener('click', () => {
+    handlePreviewDelete()
+  })
+
+  elements.modalPrev.addEventListener('click', () => {
+    handlePreviewStep(-1)
+  })
+
+  elements.modalNext.addEventListener('click', () => {
+    handlePreviewStep(1)
+  })
+
+  elements.modalOverlay.addEventListener('click', (event) => {
+    if (event.target === elements.modalOverlay) {
+      closeModal()
+    }
+  })
+
+  document.addEventListener('keydown', handleGlobalKeydown)
 }
 
+closeModal()
 bindEvents()
 loadSettings()
 loadList()

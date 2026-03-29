@@ -49,11 +49,17 @@
       <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modal-header">
           <h2 id="modalTitle" class="modal-title"></h2>
-          <button id="modalClose" class="modal-close" type="button">关闭</button>
+          <div class="modal-actions">
+            <button id="modalDownload" class="modal-action-btn is-hidden" type="button">下载</button>
+            <button id="modalDelete" class="modal-action-btn danger is-hidden" type="button">删除</button>
+            <button id="modalClose" class="modal-close" type="button">关闭</button>
+          </div>
         </div>
         <div id="modalText" class="modal-text"></div>
         <div id="modalImageWrap" class="modal-image-wrap is-hidden">
+          <button id="modalPrev" class="modal-nav prev is-hidden" type="button" aria-label="上一张">‹</button>
           <img id="modalImage" class="modal-image" alt="预览图片" />
+          <button id="modalNext" class="modal-nav next is-hidden" type="button" aria-label="下一张">›</button>
         </div>
       </div>
     </div>
