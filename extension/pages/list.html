@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Collector</title>
+    <link rel="stylesheet" href="./list.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div class="toolbar">
+        <div class="toolbar-brand">
+          <img src="../assets/logo.png" alt="Image Collector" class="brand-logo" />
+          <span class="brand-title">Image Collector</span>
+        </div>
+
+        <div class="toolbar-actions">
+          <button id="refresh" type="button">刷新</button>
+          <button id="selectAll" type="button">全选</button>
+          <button id="unselectAll" type="button">全不选</button>
+          <button id="download" type="button">下载</button>
+          <button id="clear" type="button">清空</button>
+          <label for="downloadDir" class="dir-config">
+            <span>下载目录</span>
+            <input
+              id="downloadDir"
+              type="text"
+              placeholder="留空=系统下载目录"
+            />
+          </label>
+          <label for="queryParam" class="query-config">
+            <span>URL 参数</span>
+            <input
+              id="queryParam"
+              type="text"
+              placeholder="format=jpg&name=large"
+            />
+          </label>
+          <span id="count" class="count">已勾选 0 项</span>
+          <button id="usageGuide" type="button">使用说明</button>
+        </div>
+      </div>
+
+      <div class="grid" id="list"></div>
+      <div id="empty" class="empty">暂无已采集图片，请在网页图片上右键选择“收集图片”。</div>
+    </div>
+
+    <div id="modalOverlay" class="modal-overlay" hidden>
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-header">
+          <h2 id="modalTitle" class="modal-title"></h2>
+          <button id="modalClose" class="modal-close" type="button">关闭</button>
+        </div>
+        <div id="modalText" class="modal-text"></div>
+        <div id="modalImageWrap" class="modal-image-wrap is-hidden">
+          <img id="modalImage" class="modal-image" alt="预览图片" />
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./list.js"></script>
+  </body>
+</html>

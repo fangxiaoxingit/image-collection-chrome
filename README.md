@@ -390,3 +390,99 @@ url.onclick = () => window.open(item.url)
 - ✅ 原生 JS 可直接开发
 - ✅ UI 可直接生成
 - ✅ AI 可拆任务实现
+
+---
+
+## 10. 当前仓库实现清单（已落地）
+
+已按本文档在仓库中实现如下文件：
+
+```
+extension/
+├── manifest.json
+├── background.js
+├── pages/
+│   ├── list.html
+│   ├── list.css
+│   └── list.js
+└── utils/
+    ├── storage.js
+    ├── download.js
+    └── hash.js
+```
+
+已实现能力：
+- 插件图标使用 `extension/assets/logo.png`
+- 右键菜单“收集图片”（仅图片上下文）
+- URL 去重后写入 `chrome.storage.local`
+- 点击插件图标打开列表页
+- 列表桌面端 10 列方形网格展示、URL 截断显示、点击 URL 新标签页打开
+- 单项勾选 / 全选 / 全不选
+- 顶部勾选数量实时显示
+- 工具栏刷新按钮（重新加载列表与配置）
+- 工具栏下载目录配置（留空时下载到系统默认下载目录下）
+- 工具栏 URL 参数配置（默认 `format=jpg&name=large`，下载时替换原 URL 的 query）
+- 图片右上角单项删除、全部清空
+- 批量下载（并发 3，按 `下载目录/YYYY-MM` 组织）
+- 工具栏左侧品牌图标与标题，操作区右对齐
+- 图片 hover 放大预览（放大不超出卡片区域）
+
+---
+
+## 11. 本地使用步骤（含迭代验证）
+
+### 11.1 加载插件
+
+1. 打开 Chrome，进入 `chrome://extensions/`
+2. 右上角开启“开发者模式”
+3. 点击“加载已解压的扩展程序”
+4. 选择仓库下的 `extension` 目录
+5. 确认插件 `Image Collector` 已出现
+
+### 11.2 功能使用
+
+1. 在任意网页图片上点击右键，选择“收集图片”
+2. 点击浏览器工具栏的插件图标，会打开 `pages/list.html` 列表页
+3. 在列表中勾选图片，可执行全选/全不选
+4. 可点击“刷新”手动同步最新列表和配置
+5. 工具栏可配置“下载目录”（相对系统默认下载目录，留空表示直接使用系统下载目录）
+6. 工具栏可配置“URL 参数”，默认值 `format=jpg&name=large`
+7. 点击“下载”执行批量下载（默认并发 3），下载时会用配置值替换原 URL 的 `?` 后参数
+8. 点击图片右上角“删除”删除单项，点击“清空”删除全部记录
+
+### 11.3 迭代验证建议（每次改动后都跑一轮）
+
+#### A. 静态校验
+
+在仓库根目录执行：
+
+```bash
+node --check extension/background.js
+node --check extension/pages/list.js
+node --check extension/utils/storage.js
+node --check extension/utils/download.js
+node --check extension/utils/hash.js
+node -e "const fs=require('fs'); JSON.parse(fs.readFileSync('extension/manifest.json','utf8')); console.log('manifest ok')"
+```
+
+#### B. 手工验证（MVP 回归）
+
+1. 右键采集同一图片 2 次，列表中应只有 1 条（去重验证）
+2. 勾选 2 条数据，顶部计数应显示“已勾选 2 项”
+3. 点击“全不选”，计数应回到 0
+4. 点击“下载”，Chrome 下载目录下应出现当月目录（如 `2026-03/`）
+5. 删除单项后刷新列表页，删除结果仍保留（持久化验证）
+6. 清空后刷新列表页，列表应为空
+7. 下载目录填 `image-collector` 后下载，文件应落在 `下载目录/image-collector/YYYY-MM/`
+
+### 11.4 下载确认弹窗说明（官方限制）
+
+- 扩展可以通过 `chrome.downloads.download` 的 `saveAs: false` 避免主动弹“另存为”。
+- 但如果 Chrome 设置中开启了“下载前询问每个文件的保存位置（Ask where to save each file before downloading）”，仍会出现确认交互。
+- 扩展不能把下载改到系统任意绝对路径；`filename` 只能是相对系统默认下载目录的相对路径。
+- 当前实现已支持“下载目录”配置，实际保存路径是：`系统下载目录/你配置的目录/YYYY-MM/文件名`。
+
+### 11.5 调试建议
+
+- 改代码后在 `chrome://extensions/` 点击插件“重新加载”
+- 需要看 background 日志时，进入插件详情页的 Service Worker 调试面板查看 `console`

@@ -1,0 +1,388 @@
+:root {
+  color-scheme: light;
+  --bg: #f7f8fc;
+  --panel: #ffffff;
+  --line: #e6e8ef;
+  --text: #1f2430;
+  --muted: #5d6475;
+  --primary: #1f6feb;
+  --danger: #d12f3f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #ffffff 0%, var(--bg) 55%);
+  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  color: var(--text);
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.toolbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 2px 0;
+}
+
+.brand-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.brand-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}
+
+.toolbar-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toolbar-actions button {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+
+.toolbar-actions button:hover {
+  border-color: #c9cfdd;
+}
+
+.count {
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.query-config {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.dir-config {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.dir-config input {
+  width: 180px;
+  max-width: 28vw;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--panel);
+}
+
+.dir-config input:focus {
+  outline: 2px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  outline-offset: 1px;
+}
+
+.query-config input {
+  width: 280px;
+  max-width: 40vw;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--panel);
+}
+
+.query-config input:focus {
+  outline: 2px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  outline-offset: 1px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 12px;
+  padding: 14px;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.preview-wrap {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: #f2f4fa;
+}
+
+.preview-wrap img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: zoom-in;
+  transform: scale(1);
+  transition: transform 180ms ease;
+}
+
+.card:hover .preview-wrap img {
+  transform: scale(1.09);
+}
+
+.card-meta {
+  padding: 6px 8px 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.card-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.url-link {
+  display: block;
+  max-width: 100%;
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.url-link:hover {
+  text-decoration: underline;
+}
+
+.delete {
+  border: 1px solid color-mix(in srgb, var(--danger) 42%, #ffffff);
+  background: color-mix(in srgb, #ffffff 88%, transparent);
+  color: var(--danger);
+  border-radius: 999px;
+  padding: 2px 7px;
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.delete-float {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+}
+
+.empty {
+  display: none;
+  text-align: center;
+  color: var(--muted);
+  padding: 32px 16px;
+}
+
+.empty.show {
+  display: block;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, #0e1528 28%, transparent);
+  padding: 24px;
+}
+
+.modal-panel {
+  width: min(920px, calc(100vw - 28px));
+  max-height: calc(100vh - 56px);
+  overflow: auto;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  box-shadow: 0 18px 48px rgba(16, 26, 48, 0.2);
+  padding: 14px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.modal-close {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  border-color: #c9cfdd;
+}
+
+.modal-text {
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.modal-text ol {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+}
+
+.modal-text p {
+  margin: 0 0 10px;
+  color: var(--muted);
+}
+
+.modal-image-wrap {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f2f4fa;
+}
+
+.modal-image {
+  display: block;
+  width: 100%;
+  max-height: min(78vh, 920px);
+  object-fit: contain;
+  background: #f2f4fa;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+@media (max-width: 1200px) {
+  .grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .toolbar {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .toolbar-brand {
+    width: 100%;
+  }
+
+  .toolbar-actions {
+    width: 100%;
+    margin-left: 0;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .dir-config {
+    order: 5;
+    width: 100%;
+  }
+
+  .query-config {
+    order: 6;
+    width: 100%;
+  }
+
+  .dir-config input {
+    width: 100%;
+    max-width: none;
+  }
+
+  .query-config input {
+    width: 100%;
+    max-width: none;
+  }
+
+  .count {
+    order: 7;
+    width: 100%;
+  }
+
+  #usageGuide {
+    order: 8;
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

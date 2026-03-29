@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Image Collector",
+  "version": "1.0.0",
+  "description": "Collect image URLs from context menu and manage batch downloads.",
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "downloads",
+    "tabs"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "icons": {
+    "16": "assets/logo.png",
+    "32": "assets/logo.png",
+    "48": "assets/logo.png",
+    "128": "assets/logo.png"
+  },
+  "action": {
+    "default_title": "Image Collector",
+    "default_icon": {
+      "16": "assets/logo.png",
+      "32": "assets/logo.png"
+    }
+  }
+}
