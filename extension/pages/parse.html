@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>解析页面 - Image Collector</title>
+    <link rel="stylesheet" href="./parse.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="toolbar">
+        <div class="brand">
+          <img src="../assets/logo.png" alt="Image Collector" class="logo" />
+          <div>
+            <h1>解析页面</h1>
+            <p id="sourceUrl" class="source"></p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="selectAll" type="button">全选</button>
+          <button id="unselectAll" type="button">全不选</button>
+          <button id="addSelected" type="button">添加已选</button>
+          <button id="reload" type="button">刷新候选</button>
+          <button id="openList" type="button">打开收集列表</button>
+          <span id="count" class="count">已勾选 0 项</span>
+        </div>
+      </header>
+
+      <main>
+        <div id="empty" class="empty">暂无解析结果。请点击插件图标后选择“解析页面”。</div>
+        <div id="grid" class="grid"></div>
+      </main>
+    </div>
+
+    <script type="module" src="./parse.js"></script>
+  </body>
+</html>

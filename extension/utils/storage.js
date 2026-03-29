@@ -2,6 +2,7 @@ const KEY = 'image_list'
 const DOWNLOAD_QUERY_KEY = 'download_query_param'
 const DEFAULT_DOWNLOAD_QUERY_PARAM = 'format=jpg&name=large'
 const DOWNLOAD_BASE_DIR_KEY = 'download_base_dir'
+const PARSE_CANDIDATES_KEY = 'parse_candidates_cache'
 
 function createId() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -57,6 +58,46 @@ export async function addImageIfNotExists(url) {
   await setList(nextList)
 
   return { added: true, list: nextList }
+}
+
+export async function addImagesIfNotExists(urls) {
+  const list = await getList()
+  const urlSet = new Set(list.map((item) => item.url))
+  const nextList = list.slice()
+
+  let addedCount = 0
+  let skippedCount = 0
+
+  for (const url of urls) {
+    if (typeof url !== 'string' || !url.trim()) {
+      skippedCount += 1
+      continue
+    }
+
+    const normalizedUrl = url.trim()
+    if (urlSet.has(normalizedUrl)) {
+      skippedCount += 1
+      continue
+    }
+
+    urlSet.add(normalizedUrl)
+    addedCount += 1
+    nextList.unshift({
+      id: createId(),
+      url: normalizedUrl,
+      preview: normalizedUrl,
+      createdAt: Date.now(),
+      selected: false
+    })
+  }
+
+  await setList(nextList)
+
+  return {
+    addedCount,
+    skippedCount,
+    list: nextList
+  }
 }
 
 export async function removeById(id) {
@@ -138,5 +179,52 @@ export async function getDownloadBaseDir() {
 export async function setDownloadBaseDir(value) {
   const normalized = normalizeBaseDir(value)
   await chrome.storage.local.set({ [DOWNLOAD_BASE_DIR_KEY]: normalized })
+  return normalized
+}
+
+function normalizeParseCandidateItem(item) {
+  if (!item || typeof item !== 'object') return null
+
+  const url = typeof item.url === 'string' ? item.url.trim() : ''
+  if (!url) return null
+
+  return {
+    url,
+    width: Number(item.width) || 0,
+    height: Number(item.height) || 0,
+    alt: typeof item.alt === 'string' ? item.alt : ''
+  }
+}
+
+function normalizeParseCandidates(payload) {
+  if (!payload || typeof payload !== 'object') {
+    return {
+      sourceUrl: '',
+      createdAt: Date.now(),
+      items: []
+    }
+  }
+
+  const sourceUrl = typeof payload.sourceUrl === 'string' ? payload.sourceUrl : ''
+  const createdAt = typeof payload.createdAt === 'number' ? payload.createdAt : Date.now()
+  const rawItems = Array.isArray(payload.items) ? payload.items : []
+  const items = rawItems.map(normalizeParseCandidateItem).filter(Boolean)
+
+  return {
+    sourceUrl,
+    createdAt,
+    items
+  }
+}
+
+export async function getParseCandidates() {
+  const res = await chrome.storage.local.get(PARSE_CANDIDATES_KEY)
+  const payload = res[PARSE_CANDIDATES_KEY]
+  return normalizeParseCandidates(payload)
+}
+
+export async function setParseCandidates(payload) {
+  const normalized = normalizeParseCandidates(payload)
+  await chrome.storage.local.set({ [PARSE_CANDIDATES_KEY]: normalized })
   return normalized
 }

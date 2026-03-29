@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Collector</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <main class="popup">
+      <header class="popup-header">
+        <img src="../assets/logo.png" alt="Image Collector" class="logo" />
+        <div>
+          <h1>Image Collector</h1>
+          <p>选择一个操作</p>
+        </div>
+      </header>
+
+      <div class="actions">
+        <button id="openList" class="action-btn list" type="button">收集列表</button>
+        <button id="parsePage" class="action-btn parse" type="button">解析页面</button>
+      </div>
+      <p class="hint">解析页面会提取当前标签页中较大的图片供你选择添加。</p>
+    </main>
+    <script type="module" src="./popup.js"></script>
+  </body>
+</html>
