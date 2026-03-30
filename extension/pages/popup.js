@@ -82,7 +82,7 @@ async function parseCurrentPage() {
     }
 
     const frameResults = await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
+      target: { tabId: tab.id, allFrames: true },
       func: collectImagesFromDocument,
       args: [MIN_WIDTH, MIN_HEIGHT, MIN_AREA]
     })

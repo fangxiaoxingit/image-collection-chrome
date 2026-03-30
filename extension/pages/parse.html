@@ -17,6 +17,16 @@
           </div>
         </div>
 
+        <form id="parseForm" class="parse-form">
+          <input
+            id="parseUrlInput"
+            type="text"
+            placeholder="输入或粘贴网址，例如 https://example.com"
+            autocomplete="off"
+          />
+          <button id="parseByUrl" type="submit">解析网址</button>
+        </form>
+
         <div class="actions">
           <button id="selectAll" type="button">全选</button>
           <button id="unselectAll" type="button">全不选</button>
@@ -31,6 +41,20 @@
         <div id="empty" class="empty">暂无解析结果。请点击插件图标后选择“解析页面”。</div>
         <div id="grid" class="grid"></div>
       </main>
+    </div>
+
+    <div id="previewOverlay" class="preview-overlay" hidden>
+      <div class="preview-panel" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+        <div class="preview-header">
+          <h2 id="previewTitle" class="preview-title"></h2>
+          <button id="previewClose" type="button">关闭</button>
+        </div>
+        <div class="preview-wrap">
+          <button id="previewPrev" class="preview-nav prev" type="button" aria-label="上一张">‹</button>
+          <img id="previewImage" class="preview-image" alt="预览图片" />
+          <button id="previewNext" class="preview-nav next" type="button" aria-label="下一张">›</button>
+        </div>
+      </div>
     </div>
 
     <script type="module" src="./parse.js"></script>
