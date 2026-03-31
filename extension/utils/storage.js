@@ -107,6 +107,14 @@ export async function removeById(id) {
   return nextList
 }
 
+export async function removeByIds(ids) {
+  const idSet = new Set(ids)
+  const list = await getList()
+  const nextList = list.filter((item) => !idSet.has(item.id))
+  await setList(nextList)
+  return nextList
+}
+
 export async function clearAll() {
   await setList([])
   return []

@@ -4,6 +4,7 @@ import {
   getDownloadQueryParam,
   getList,
   removeById,
+  removeByIds,
   setDownloadBaseDir,
   setDownloadQueryParam,
   setAllSelected,
@@ -23,10 +24,12 @@ const elements = {
   list: document.getElementById('list'),
   empty: document.getElementById('empty'),
   count: document.getElementById('count'),
+  totalCount: document.getElementById('totalCount'),
   selectAll: document.getElementById('selectAll'),
   unselectAll: document.getElementById('unselectAll'),
   refresh: document.getElementById('refresh'),
   download: document.getElementById('download'),
+  batchDelete: document.getElementById('batchDelete'),
   sendMail: document.getElementById('sendMail'),
   clear: document.getElementById('clear'),
   moreActions: document.getElementById('moreActions'),
@@ -61,6 +64,10 @@ function getSelectedItems() {
 function updateSelectedCount() {
   const selectedCount = getSelectedItems().length
   elements.count.textContent = `已勾选 ${selectedCount} 项`
+}
+
+function updateTotalCount() {
+  elements.totalCount.textContent = `(共 ${state.list.length} 张)`
 }
 
 function toggleEmpty() {
@@ -249,12 +256,17 @@ function handleGlobalKeydown(event) {
   handlePreviewHotkey(event)
 }
 
-function createCard(item) {
+function createCard(item, index) {
   const card = document.createElement('article')
   card.className = 'card'
 
   const previewWrap = document.createElement('div')
   previewWrap.className = 'preview-wrap'
+
+  const indexBadge = document.createElement('span')
+  indexBadge.className = 'card-index'
+  indexBadge.textContent = index + 1
+  previewWrap.appendChild(indexBadge)
 
   const preview = document.createElement('img')
   preview.src = item.preview || item.url
@@ -321,11 +333,12 @@ function createCard(item) {
 function renderList() {
   elements.list.innerHTML = ''
 
-  for (const item of state.list) {
-    elements.list.appendChild(createCard(item))
-  }
+  state.list.forEach((item, index) => {
+    elements.list.appendChild(createCard(item, index))
+  })
 
   updateSelectedCount()
+  updateTotalCount()
   toggleEmpty()
 }
 
@@ -604,6 +617,21 @@ async function handleClear() {
   renderList()
 }
 
+async function handleBatchDelete() {
+  const selectedItems = getSelectedItems()
+  if (selectedItems.length === 0) {
+    alert('请先勾选至少一张图片')
+    return
+  }
+
+  const shouldDelete = confirm(`确定删除选中的 ${selectedItems.length} 张图片吗？`)
+  if (!shouldDelete) return
+
+  const idsToDelete = selectedItems.map((item) => item.id)
+  state.list = await removeByIds(idsToDelete)
+  renderList()
+}
+
 async function handleRefresh() {
   await Promise.all([loadSettings(), loadList()])
 }
@@ -619,6 +647,10 @@ function bindEvents() {
 
   elements.download.addEventListener('click', () => {
     handleBatchDownload()
+  })
+
+  elements.batchDelete.addEventListener('click', () => {
+    handleBatchDelete()
   })
 
   elements.sendMail.addEventListener('click', () => {
