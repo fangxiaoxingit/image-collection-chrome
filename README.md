@@ -1,511 +1,115 @@
-# ImageCollectionChrome
+# Image Collector
 
-> 图片采集 Chrome 浏览器插件开发
+[下载最新版](https://github.com/fangxiaoxingit/image-collection-chrome/releases/latest/download/image-collector.zip) · [版本记录](https://github.com/fangxiaoxingit/image-collection-chrome/releases) · [发布指南](docs/RELEASING.md)
 
-## 简介
+一个用于收集、预览和批量下载网页图片的 Chrome 扩展。支持右键收集单张图片，也可以解析页面后挑选需要的图片。
 
-用户安装浏览器插件后，添加到右键菜单，在图片上右键菜单选中即可保存当前图片 URL 到缓存目录，然后用户点击插件图标，跳转打开已收集列表，顶部是工具栏，全选，全不选，批量下载（打包当前年月 2025-01 这种）已勾选图标；勾选的同时顶部显示勾选数量；
+## 功能
 
-列表一行显示五个，名称显示 URL（可不显示全），但是点击名称跳转打开这张图片。
+- **图片采集**：右键收集、解析当前标签页、输入网址解析。
+- **候选筛选**：查看图片分辨率和文件大小，勾选后添加到收集列表。
+- **图片管理**：大图预览、上一张 / 下一张切换、全选、单项或批量删除。
+- **批量下载**：按年月目录保存，支持自定义子目录和下载 URL 参数。
+- **数据备份**：JSON 导入 / 导出，按完整 URL 自动去重。
 
----
+## 安装
 
-## 升级后的最终版需求文档
+1. 从 [最新 Release](https://github.com/fangxiaoxingit/image-collection-chrome/releases/latest) 下载 `image-collector.zip` 并解压。
+2. 在 Chrome 地址栏打开 `chrome://extensions/`。
+3. 开启右上角的“开发者模式”，点击“加载已解压的扩展程序”。
+4. 选择解压后包含 `manifest.json` 的目录；若通过源码安装，则选择仓库下的 `extension` 目录。
+5. 在浏览器扩展菜单中将 **Image Collector** 固定到工具栏，方便使用。
 
-> 偏工程落地 + 原生 JS + UI 规范 + AI 可生成代码
+无需安装依赖或运行构建命令。加载步骤也可参考 [Chrome 官方说明](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world)。
 
-**补充内容：**
-- ✅ 原生 JS 架构（无 TS）
-- ✅ 模块划分（方便 AI 生成代码）
-- ✅ UI 结构 + CSS 规范
-- ✅ 关键代码骨架（可直接让 AI 补全）
-- ✅ Manifest V3 注意点（真实开发坑）
+更新时解压新版本，重新加载扩展并刷新已打开的插件页面。当前通过 GitHub 分发。
 
----
+## 使用
 
-## 1. 技术选型（明确约束）
+### 收集图片
 
-### 1.1 基础技术
-- 原生 JavaScript（不使用 TS）
-- HTML + CSS（不依赖框架）
-- Chrome Extension Manifest V3
+- **单张收集**：在网页图片上右键，选择“收集图片”。
+- **当前页面**：点击插件图标 → “解析页面”，在候选页勾选图片并点击“添加已选”。
+- **指定网址**：在解析页输入网址，点击“解析网址”，再勾选并添加图片。解析时会临时打开后台标签页，完成后关闭。
 
-### 1.2 为什么不用 TS / 框架
-- 降低复杂度
-- 方便 AI 直接生成代码
-- 插件体积更小
-- 无需构建工具（vite / webpack）
+### 管理与下载
 
-### 1.3 Manifest V3 关键限制（必须知道）
-- background 是 service worker（非持久）
-- 不能操作 DOM
-- 必须用 storage 做持久化
+点击插件图标 → “收集列表”。勾选图片后可批量下载或删除，点击图片可打开大图预览。预览支持左右方向键切换、`Esc` 关闭。
 
-> � **提示**
-> - service worker 无 DOM，需要额外方案处理 DOM ([Stack Overflow](https://stackoverflow.com))
-> - MV3 强制更安全但限制更多 ([Chrome for Developers](https://developer.chrome.com))
+“发送邮件”会打开默认邮件客户端，将选中图片的 URL 填入正文，实际发送由你完成。“刷新”用于重新读取本地列表与配置。
 
----
+### 下载设置
 
-## 2. 项目目录结构（推荐）
+在收集列表点击“更多功能”：
 
+| 设置 | 说明 |
+| --- | --- |
+| 下载目录 | 填写相对于浏览器默认下载目录的子目录，例如 `image-collector`；留空则直接在默认下载目录下按年月保存。 |
+| URL 参数 | 默认值为 `format=jpg&name=large`。填写后会整体替换下载链接原有的查询参数；留空则保留原链接。 |
+
+保存路径示例：
+
+```text
+默认下载目录/
+└── image-collector/       # 自定义子目录，可留空
+    └── YYYY-MM/
+        └── 图片文件
 ```
+
+**使用普通图片链接或带签名参数的链接时，建议将“URL 参数”留空，避免替换原参数导致下载失败。** 该设置只影响下载，不修改收集列表中的原始 URL。
+
+批量下载将图片分别保存为独立文件，不生成 ZIP。页面提示统计的是下载任务启动结果，最终完成情况以 Chrome 下载记录为准。若出现保存位置提示，可在 `chrome://settings/downloads` 中调整相关设置。下载路径范围参见 [Chrome 下载 API 说明](https://developer.chrome.com/docs/extensions/reference/api/downloads#type-DownloadOptions)。
+
+## 数据与权限
+
+采集记录、解析候选和配置保存在当前浏览器的本地扩展存储中，不上传至项目服务器。预览、文件大小检测和下载会请求图片原站；解析指定网址会访问对应页面。
+
+JSON 导出包含完整图片 URL 和下载配置，可通过“更多功能”导入恢复。分享导出文件前，请检查 URL 中是否含私人访问参数。
+
+| 权限 | 用途 |
+| --- | --- |
+| `contextMenus` | 提供“收集图片”右键菜单。 |
+| `storage` | 保存采集记录、候选结果与配置。 |
+| `downloads` | 发起图片下载。 |
+| `tabs` | 获取页面信息、打开列表页及临时解析标签页。 |
+| `scripting` | 在目标页面执行图片提取脚本。 |
+| `activeTab` | 点击插件时，临时获得当前标签页的访问权限。 |
+| `<all_urls>` | 允许解析不同网站，并向图片原站请求文件大小。 |
+
+## 已知限制
+
+- 页面解析只提取当时已有的 HTTP(S) `<img>`，宽高均需至少 120px。不提取 CSS 背景、Canvas 或 `data:` / `blob:` 图片，也不会自动滚动加载更多内容；可先滚动页面，再使用“解析页面”。
+- “刷新候选”只重新读取上一次解析结果；页面内容变化后，需要重新解析。
+- 右键采集不验证目标是否为图片，在非图片位置使用时可能保存网页、链接或媒体地址。
+- 去重依据完整 URL，不比较图片内容；同一图片的不同 URL 仍可能分别保存。
+- 文件大小无法获取时显示“未知”；链接过期或原站访问限制可能导致预览或下载失败。
+
+## 开发
+
+使用原生 JavaScript、HTML / CSS 和 Manifest V3，无框架或构建步骤。
+
+```text
 extension/
-│
-├── manifest.json
-├── background.js
-├── content.js（可选）
-│
+├── manifest.json       # 扩展配置与权限
+├── background.js       # 右键菜单与单张采集
+├── assets/             # 图标
 ├── pages/
-│   └── list.html
-│   └── list.js
-│   └── list.css
-│
-├── utils/
-│   └── storage.js
-│   └── download.js
-│   └── hash.js
-│
-└── assets/
+│   ├── popup.*         # 插件入口菜单
+│   ├── list.*          # 收集列表、预览与配置
+│   └── parse.*         # 页面解析与候选筛选
+└── utils/              # 本地存储、下载及辅助工具
 ```
 
----
+修改代码后，在 `chrome://extensions/` 点击扩展的“重新加载”，并刷新已打开的插件页面。页面交互可通过开发者工具调试；后台日志可在扩展详情的 Service Worker 调试入口查看。
 
-## 3. manifest.json（最小可用）
+提交改动前，建议验证右键去重、页面解析、候选添加、下载、删除及 JSON 导入 / 导出。
 
-```json
-{
-  "manifest_version": 3,
-  "name": "Image Collector",
-  "version": "1.0.0",
-  "permissions": [
-    "contextMenus",
-    "storage",
-    "downloads"
-  ],
-  "background": {
-    "service_worker": "background.js"
-  },
-  "action": {
-    "default_title": "Image Collector"
-  }
-}
-```
+## 自动发布
 
----
+推送 `main` 或提交 PR 时，GitHub Actions 自动校验并生成安装包。推送与 `manifest.json` 版本匹配的 `v*` 标签后，自动发布 Release，上传固定名 ZIP、版本名 ZIP 和 SHA-256 校验文件。
 
-## 4. 核心模块设计（AI 友好）
+本地打包运行 `python3 scripts/package.py`，产物位于 `dist/`。完整步骤和手动发布方式见 [发布指南](docs/RELEASING.md)。
 
-### 4.1 storage 模块
+## 许可
 
-```javascript
-// utils/storage.js
-
-const KEY = 'image_list'
-
-export async function getList() {
-  const res = await chrome.storage.local.get(KEY)
-  return res[KEY] || []
-}
-
-export async function setList(list) {
-  return chrome.storage.local.set({ [KEY]: list })
-}
-```
-
-### 4.2 数据结构
-
-```javascript
-{
-  id: string,
-  url: string,
-  preview: string,
-  createdAt: number,
-  selected: false
-}
-```
-
-### 4.3 右键采集（background.js）
-
-```javascript
-chrome.contextMenus.create({
-  id: "save_image",
-  title: "收集图片",
-  contexts: ["image"]
-})
-
-chrome.contextMenus.onClicked.addListener(async (info) => {
-  const url = info.srcUrl
-
-  const list = await getList()
-
-  // URL 去重
-  if (list.some(i => i.url === url)) return
-
-  list.unshift({
-    id: Date.now().toString(),
-    url,
-    preview: url,
-    createdAt: Date.now(),
-    selected: false
-  })
-
-  await setList(list)
-})
-```
-
-### 4.4 下载模块
-
-```javascript
-// utils/download.js
-
-export async function downloadImage(url, filename) {
-  return chrome.downloads.download({
-    url,
-    filename,
-    saveAs: false
-  })
-}
-```
-
-> � downloads API 会自动带 cookie ([Chrome for Developers](https://developer.chrome.com))
-
-### 4.5 批量下载（队列版）
-
-```javascript
-export async function batchDownload(list) {
-  const queue = list.slice()
-
-  const MAX = 3
-
-  async function worker() {
-    while (queue.length) {
-      const item = queue.shift()
-      await downloadImage(item.url, `2025-01/${Date.now()}.jpg`)
-    }
-  }
-
-  await Promise.all(new Array(MAX).fill(0).map(worker))
-}
-```
-
-### 4.6 hash 去重（可选）
-
-```javascript
-export async function hashImage(url) {
-  const res = await fetch(url)
-  const buffer = await res.arrayBuffer()
-  const hash = await crypto.subtle.digest('SHA-256', buffer)
-
-  return Array.from(new Uint8Array(hash))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('')
-}
-```
-
----
-
-## 5. UI 设计（重点）
-
-### 5.1 页面结构（list.html）
-
-```html
-<body>
-  <div id="app">
-    
-    <!-- 工具栏 -->
-    <div class="toolbar">
-      <button id="selectAll">全选</button>
-      <button id="unselectAll">全不选</button>
-      <button id="download">下载</button>
-      <button id="clear">清空</button>
-      <span id="count"></span>
-    </div>
-
-    <!-- 列表 -->
-    <div class="grid" id="list"></div>
-
-  </div>
-</body>
-```
-
-### 5.2 卡片结构
-
-```html
-<div class="card">
-  <input type="checkbox" />
-  <img />
-  <div class="url"></div>
-  <button class="delete">删除</button>
-</div>
-```
-
-### 5.3 CSS 规范（核心）
-
-```css
-body {
-  margin: 0;
-  font-family: Arial;
-}
-
-.toolbar {
-  display: flex;
-  gap: 10px;
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
-  padding: 10px;
-}
-
-.card {
-  border: 1px solid #eee;
-  padding: 8px;
-  position: relative;
-}
-
-.card img {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-}
-
-.url {
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-```
-
-### 5.4 UI 行为
-
-#### 勾选
-
-```javascript
-checkbox.onchange = () => {
-  item.selected = checkbox.checked
-}
-```
-
-#### 删除
-
-```javascript
-btn.onclick = () => removeItem(item.id)
-```
-
-#### 清空
-
-```javascript
-if (confirm("确定清空？")) {
-  setList([])
-}
-```
-
-#### 打开图片
-
-```javascript
-url.onclick = () => window.open(item.url)
-```
-
----
-
-## 6. AI 生成代码策略（非常关键）
-
-为了让 AI 更好生成代码，建议你：
-
-### 6.1 每个模块独立描述
-
-例如：
-
-```
-请帮我实现 storage.js：
-- getList
-- setList
-- 使用 chrome.storage.local
-```
-
-### 6.2 UI 拆分任务
-
-生成 list.html + list.css
-
-要求：
-- 5 列 grid
-- 卡片结构
-
-### 6.3 行为拆分
-
-实现批量下载：
-- 并发 3
-- 使用 chrome.downloads
-
----
-
-## 7. 开发阶段建议（非常实用）
-
-### Phase 1（MVP）
-- 右键采集
-- 列表展示
-- URL 去重
-- 批量下载
-
-### Phase 2
-- 删除
-- 清空
-- 勾选计数
-- UI 优化
-
-### Phase 3
-- hash 去重
-- 下载状态
-- 失败重试
-
----
-
-## 8. 核心风险总结
-
-> ⚠️ **1. 图片 URL 不稳定**
-> - 可能是缩略图
-> - 可能过期
-
-> ⚠️ **2. MV3 限制**
-> - worker 不持久
-> - 无 DOM
-
-> ⚠️ **3. 下载控制有限**
-> - 浏览器可能弹窗
-> - 用户设置不可控
-
----
-
-## 9. 最终总结
-
-这个版本已经具备：
-
-- ✅ 完整工程结构
-- ✅ 原生 JS 可直接开发
-- ✅ UI 可直接生成
-- ✅ AI 可拆任务实现
-
----
-
-## 10. 当前仓库实现清单（已落地）
-
-已按本文档在仓库中实现如下文件：
-
-```
-extension/
-├── manifest.json
-├── background.js
-├── pages/
-│   ├── list.html
-│   ├── list.css
-│   └── list.js
-└── utils/
-    ├── storage.js
-    ├── download.js
-    └── hash.js
-```
-
-已实现能力：
-- 插件图标使用 `extension/assets/logo.png`
-- 点击插件图标显示菜单：`收集列表` / `解析页面`
-- 右键菜单“收集图片”支持多触发上下文：`image/all/page/link/frame/video/audio/selection`
-- URL 去重后写入 `chrome.storage.local`
-- 解析页面会自动提取当前页面 `img`（过滤过小图片）并进入候选页供勾选添加
-- 解析页面顶部中间支持输入/粘贴网址并解析该页面图片（自动过滤过小图片）
-- 解析页面候选卡片在勾选框右侧显示分辨率与文件大小（大小无法获取时显示“未知”）
-- 解析页面支持点击图片弹窗预览（统一风格，支持上一张/下一张切换）
-- 列表桌面端 10 列方形网格展示、URL 截断显示、点击 URL 新标签页打开
-- 单项勾选 / 全选 / 全不选
-- 顶部勾选数量实时显示
-- 工具栏“发送邮件”按钮（把已勾选图片 URL 填入邮件正文）
-- 工具栏刷新按钮（重新加载列表与配置）
-- 工具栏“使用说明”按钮（弹窗展示下载设置步骤）
-- 工具栏“更多功能”按钮（弹窗集中配置）
-- 更多功能弹窗支持下载目录配置（留空时下载到系统默认下载目录下）
-- 更多功能弹窗支持 URL 参数配置（默认 `format=jpg&name=large`，下载时替换原 URL 的 query）
-- 更多功能弹窗支持 JSON 导出 / 导入（重复导入自动按 URL 去重）
-- 导入兼容：插件导出格式、`images/list` 对象格式、纯数组格式
-- 图片右上角单项删除、全部清空
-- 批量下载（并发 3，按 `下载目录/YYYY-MM` 组织）
-- 工具栏左侧品牌图标与标题，操作区右对齐
-- 图片 hover 放大预览（放大不超出卡片区域）
-- 点击图片弹窗查看大图（统一风格弹窗）
-- 预览弹窗支持上一张/下一张切换
-- 预览弹窗支持下载当前图片、删除当前图片（含删除确认）
-
----
-
-## 11. 本地使用步骤（含迭代验证）
-
-### 11.1 加载插件
-
-1. 打开 Chrome，进入 `chrome://extensions/`
-2. 右上角开启“开发者模式”
-3. 点击“加载已解压的扩展程序”
-4. 选择仓库下的 `extension` 目录
-5. 确认插件 `Image Collector` 已出现
-
-### 11.2 功能使用
-
-1. 在任意网页图片上点击右键，选择“收集图片”
-2. 点击浏览器工具栏插件图标，会显示两个选项：
-   - `收集列表`：打开 `pages/list.html`
-   - `解析页面`：解析当前标签页图片并打开 `pages/parse.html`
-3. 在“解析页面”候选页中可在顶部中间输入/粘贴网址，点击“解析网址”抓取该网址下的图片候选
-4. 在“解析页面”候选页中勾选图片，勾选框右侧会显示分辨率与大小，点击“添加已选”写入收集列表（自动 URL 去重）
-5. 在解析候选页可点击图片查看大图预览，并支持上一张/下一张切换
-6. 在收集列表页中勾选图片，可执行全选/全不选
-7. 可点击“刷新”手动同步最新列表和配置
-8. 可点击“更多功能”打开配置弹窗，在里面设置下载目录、URL 参数、JSON 导入导出
-9. 可点击“使用说明”查看一键下载设置步骤（弹窗）
-10. 点击“下载”执行批量下载（默认并发 3），下载时会用配置值替换原 URL 的 `?` 后参数
-11. 点击“发送邮件”可把已勾选图片 URL 生成邮件正文并调用系统默认邮箱客户端
-12. 点击图片可弹窗查看大图，可在弹窗里切换上一张/下一张、下载或删除当前图片
-13. 点击图片右上角“删除”删除单项，点击“清空”删除全部记录
-
-### 11.3 迭代验证建议（每次改动后都跑一轮）
-
-#### A. 静态校验
-
-在仓库根目录执行：
-
-```bash
-node --check extension/background.js
-node --check extension/pages/list.js
-node --check extension/utils/storage.js
-node --check extension/utils/download.js
-node --check extension/utils/hash.js
-node -e "const fs=require('fs'); JSON.parse(fs.readFileSync('extension/manifest.json','utf8')); console.log('manifest ok')"
-```
-
-#### B. 手工验证（MVP 回归）
-
-1. 右键采集同一图片 2 次，列表中应只有 1 条（去重验证）
-2. 勾选 2 条数据，顶部计数应显示“已勾选 2 项”
-3. 点击“全不选”，计数应回到 0
-4. 点击“下载”，Chrome 下载目录下应出现当月目录（如 `2026-03/`）
-5. 删除单项后刷新列表页，删除结果仍保留（持久化验证）
-6. 清空后刷新列表页，列表应为空
-7. 下载目录填 `image-collector` 后下载，文件应落在 `下载目录/image-collector/YYYY-MM/`
-8. 导出 JSON 后再导入同一文件，列表不应产生重复 URL 数据
-9. 点击插件图标选择“解析页面”，解析结果页应展示当前页面较大图片并可勾选添加
-10. 在解析页中输入一个网址并点击“解析网址”，应展示该网址图片候选，且每项显示“分辨率 + 大小”
-11. 在解析页点击任意候选图，预览弹窗应正常打开/关闭，并可切换上一张和下一张
-
-### 11.4 下载确认弹窗说明（官方限制）
-
-- 扩展可以通过 `chrome.downloads.download` 的 `saveAs: false` 避免主动弹“另存为”。
-- 但如果 Chrome 设置中开启了“下载前询问每个文件的保存位置（Ask where to save each file before downloading）”，仍会出现确认交互。
-- 扩展不能把下载改到系统任意绝对路径；`filename` 只能是相对系统默认下载目录的相对路径。
-- 当前实现已支持“下载目录”配置，实际保存路径是：`系统下载目录/你配置的目录/YYYY-MM/文件名`。
-
-### 11.5 调试建议
-
-- 改代码后在 `chrome://extensions/` 点击插件“重新加载”
-- 需要看 background 日志时，进入插件详情页的 Service Worker 调试面板查看 `console`
+本项目使用 [MIT License](LICENSE)。
