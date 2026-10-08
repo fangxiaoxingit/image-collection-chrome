@@ -34,6 +34,8 @@ jobs:
           done
       - name: Test release packaging
         run: python3 -m unittest discover -s tests -v
+      - name: Test extension behavior
+        run: node --test tests/*.test.mjs
       - name: Package extension and validate version tag
         run: |
           if [ "$GITHUB_REF_TYPE" = "tag" ]; then

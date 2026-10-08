@@ -47,6 +47,7 @@ body.modal-open {
   gap: 8px;
   min-height: 34px;
   padding: 2px 0;
+  flex-shrink: 0;
 }
 
 .brand-logo {
@@ -73,6 +74,63 @@ body.modal-open {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.date-sort-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #dce0e8;
+  background: #f4f5f8;
+  color: #4f5a72;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.date-sort-control select {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.date-sort-control:focus-within {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.date-groups {
+  padding: 14px;
+  display: grid;
+  gap: 24px;
+}
+
+.date-group {
+  min-width: 0;
+}
+
+.date-group-header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.date-group-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.date-group-count {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .tool-btn {
@@ -160,7 +218,6 @@ body.modal-open {
   display: grid;
   grid-template-columns: repeat(10, minmax(0, 1fr));
   gap: 12px;
-  padding: 14px;
 }
 
 .card {
@@ -491,6 +548,7 @@ body.modal-open {
     margin-left: 0;
     flex-wrap: wrap;
     gap: 8px;
+    justify-content: flex-start;
   }
 
   .count {

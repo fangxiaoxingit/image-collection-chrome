@@ -2,19 +2,24 @@ import {
   clearAll,
   getDownloadBaseDir,
   getDownloadQueryParam,
+  getDateGroupPeriod,
   getList,
   removeById,
   removeByIds,
   setDownloadBaseDir,
   setDownloadQueryParam,
+  setDateGroupPeriod,
   setAllSelected,
   setList,
   setSelectedById
 } from '../utils/storage.js'
 import { batchDownload } from '../utils/download.js'
+import { groupImagesByDate } from '../utils/date-groups.js'
 
 const state = {
   list: [],
+  viewList: [],
+  groupPeriod: 'day',
   queryParam: 'format=jpg&name=large',
   downloadBaseDir: '',
   previewIndex: -1
@@ -28,6 +33,7 @@ const elements = {
   selectAll: document.getElementById('selectAll'),
   unselectAll: document.getElementById('unselectAll'),
   refresh: document.getElementById('refresh'),
+  dateGrouping: document.getElementById('dateGrouping'),
   download: document.getElementById('download'),
   batchDelete: document.getElementById('batchDelete'),
   sendMail: document.getElementById('sendMail'),
@@ -129,24 +135,24 @@ function openMoreModal() {
 }
 
 function getCurrentPreviewItem() {
-  if (state.previewIndex < 0 || state.previewIndex >= state.list.length) return null
-  return state.list[state.previewIndex]
+  if (state.previewIndex < 0 || state.previewIndex >= state.viewList.length) return null
+  return state.viewList[state.previewIndex]
 }
 
 function updatePreviewNavState() {
   const hasPrev = state.previewIndex > 0
-  const hasNext = state.previewIndex >= 0 && state.previewIndex < state.list.length - 1
+  const hasNext = state.previewIndex >= 0 && state.previewIndex < state.viewList.length - 1
 
   elements.modalPrev.disabled = !hasPrev
   elements.modalNext.disabled = !hasNext
 }
 
 function openImageModalByIndex(index) {
-  if (index < 0 || index >= state.list.length) return
+  if (index < 0 || index >= state.viewList.length) return
 
   state.previewIndex = index
-  const item = state.list[index]
-  elements.modalTitle.textContent = `图片预览 (${index + 1}/${state.list.length})`
+  const item = state.viewList[index]
+  elements.modalTitle.textContent = `图片预览 (${index + 1}/${state.viewList.length})`
   elements.modalImage.src = item.url
   elements.modalImage.alt = item.url
   setModalMode('image')
@@ -155,7 +161,7 @@ function openImageModalByIndex(index) {
 }
 
 function openImageModalById(id) {
-  const index = state.list.findIndex((item) => item.id === id)
+  const index = state.viewList.findIndex((item) => item.id === id)
   if (index < 0) return
   openImageModalByIndex(index)
 }
@@ -169,7 +175,7 @@ function handlePreviewStep(step) {
     return
   }
 
-  if (nextIndex >= state.list.length) {
+  if (nextIndex >= state.viewList.length) {
     alert('已经不存在下一张壁纸。')
     return
   }
@@ -212,12 +218,12 @@ async function handlePreviewDelete() {
     return
   }
 
-  if (removedIndex < state.list.length) {
+  if (removedIndex < state.viewList.length) {
     openImageModalByIndex(removedIndex)
     return
   }
 
-  const prevIndex = state.list.length - 1
+  const prevIndex = state.viewList.length - 1
   if (prevIndex >= 0) {
     openImageModalByIndex(prevIndex)
     alert('已不存在下一张壁纸，已切换到上一张壁纸。')
@@ -332,10 +338,32 @@ function createCard(item, index) {
 
 function renderList() {
   elements.list.innerHTML = ''
+  const groups = groupImagesByDate(state.list, state.groupPeriod)
+  state.viewList = groups.flatMap((group) => group.items)
+  let cardIndex = 0
+  const fragment = document.createDocumentFragment()
 
-  state.list.forEach((item, index) => {
-    elements.list.appendChild(createCard(item, index))
-  })
+  for (const group of groups) {
+    const section = document.createElement('section')
+    section.className = 'date-group'
+    const header = document.createElement('div')
+    header.className = 'date-group-header'
+    const title = document.createElement('h2')
+    title.className = 'date-group-title'
+    title.textContent = group.label
+    const count = document.createElement('span')
+    count.className = 'date-group-count'
+    count.textContent = `${group.items.length} 张`
+    header.append(title, count)
+    const grid = document.createElement('div')
+    grid.className = 'grid'
+    for (const item of group.items) {
+      grid.appendChild(createCard(item, cardIndex++))
+    }
+    section.append(header, grid)
+    fragment.appendChild(section)
+  }
+  elements.list.appendChild(fragment)
 
   updateSelectedCount()
   updateTotalCount()
@@ -348,12 +376,15 @@ async function loadList() {
 }
 
 async function loadSettings() {
-  const [queryParam, downloadBaseDir] = await Promise.all([
+  const [queryParam, downloadBaseDir, groupPeriod] = await Promise.all([
     getDownloadQueryParam(),
-    getDownloadBaseDir()
+    getDownloadBaseDir(),
+    getDateGroupPeriod()
   ])
   state.queryParam = queryParam
   state.downloadBaseDir = downloadBaseDir
+  state.groupPeriod = groupPeriod
+  elements.dateGrouping.value = groupPeriod
   syncConfigInputsFromState()
 }
 
@@ -633,10 +664,16 @@ async function handleBatchDelete() {
 }
 
 async function handleRefresh() {
-  await Promise.all([loadSettings(), loadList()])
+  await loadSettings()
+  await loadList()
 }
 
 function bindEvents() {
+  elements.dateGrouping.addEventListener('change', async () => {
+    state.groupPeriod = elements.dateGrouping.value
+    renderList()
+    await setDateGroupPeriod(state.groupPeriod)
+  })
   elements.selectAll.addEventListener('click', () => {
     handleSelectAll(true)
   })
@@ -732,5 +769,4 @@ function bindEvents() {
 
 closeModal()
 bindEvents()
-loadSettings()
-loadList()
+handleRefresh()

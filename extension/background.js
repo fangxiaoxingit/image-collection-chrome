@@ -36,14 +36,38 @@ function pickTargetUrl(info, tab) {
   return findUrlInText(info.selectionText)
 }
 
-function createContextMenu() {
-  chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({
+let contextMenuInitializing = false
+
+function runContextMenuOperation(operation) {
+  return new Promise((resolve, reject) => {
+    operation(() => {
+      const error = chrome.runtime.lastError
+      if (error) {
+        reject(new Error(error.message))
+        return
+      }
+      resolve()
+    })
+  })
+}
+
+async function createContextMenu() {
+  // Installation and startup can overlap; keep the lock until creation completes.
+  if (contextMenuInitializing) return
+  contextMenuInitializing = true
+
+  try {
+    await runContextMenuOperation((callback) => chrome.contextMenus.removeAll(callback))
+    await runContextMenuOperation((callback) => chrome.contextMenus.create({
       id: MENU_ID,
       title: '收集图片',
       contexts: MENU_CONTEXTS
-    })
-  })
+    }, callback))
+  } catch (error) {
+    console.error('初始化收集图片菜单失败：', error)
+  } finally {
+    contextMenuInitializing = false
+  }
 }
 
 chrome.runtime.onInstalled.addListener(() => {

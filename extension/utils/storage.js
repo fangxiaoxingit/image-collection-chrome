@@ -3,6 +3,22 @@ const DOWNLOAD_QUERY_KEY = 'download_query_param'
 const DEFAULT_DOWNLOAD_QUERY_PARAM = 'format=jpg&name=large'
 const DOWNLOAD_BASE_DIR_KEY = 'download_base_dir'
 const PARSE_CANDIDATES_KEY = 'parse_candidates_cache'
+const DATE_GROUP_PERIOD_KEY = 'date_group_period'
+
+function normalizeDateGroupPeriod(value) {
+  return ['day', 'week', 'month'].includes(value) ? value : 'day'
+}
+
+export async function getDateGroupPeriod() {
+  const res = await chrome.storage.local.get(DATE_GROUP_PERIOD_KEY)
+  return normalizeDateGroupPeriod(res[DATE_GROUP_PERIOD_KEY])
+}
+
+export async function setDateGroupPeriod(value) {
+  const period = normalizeDateGroupPeriod(value)
+  await chrome.storage.local.set({ [DATE_GROUP_PERIOD_KEY]: period })
+  return period
+}
 
 function createId() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {

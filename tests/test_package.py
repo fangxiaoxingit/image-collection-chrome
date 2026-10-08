@@ -17,6 +17,7 @@ RUNTIME_FILES = (
     'pages/parse.html', 'pages/parse.css', 'pages/parse.js',
     'pages/popup.html', 'pages/popup.css', 'pages/popup.js',
     'utils/storage.js', 'utils/download.js', 'utils/hash.js',
+    'utils/date-groups.js',
 )
 
 

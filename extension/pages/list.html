@@ -19,6 +19,14 @@
           <button id="refresh" class="tool-btn btn-sky" type="button">
             <span>刷新</span>
           </button>
+          <label class="date-sort-control" for="dateGrouping">
+            <span>日期排序</span>
+            <select id="dateGrouping" name="dateGrouping" title="按添加日期分组，最新在前">
+              <option value="day">按日分组</option>
+              <option value="week">按周分组</option>
+              <option value="month">按月分组</option>
+            </select>
+          </label>
           <button id="selectAll" class="tool-btn btn-teal" type="button">
             <span>全选</span>
           </button>
@@ -47,7 +55,7 @@
         </div>
       </div>
 
-      <div class="grid" id="list"></div>
+      <div class="date-groups" id="list"></div>
       <div id="empty" class="empty">暂无已采集图片，请在网页图片上右键选择“收集图片”。</div>
     </div>
 

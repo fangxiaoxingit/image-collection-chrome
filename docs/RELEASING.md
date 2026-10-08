@@ -8,6 +8,7 @@
 
 ```sh
 python3 -m unittest discover -s tests -v
+node --test tests/*.test.mjs
 for file in extension/background.js extension/pages/*.js extension/utils/*.js; do
   node --check "$file"
 done
