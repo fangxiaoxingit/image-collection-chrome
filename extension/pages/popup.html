@@ -3,24 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Image Collector</title>
+    <title data-i18n="popupTitle">Image Collector</title>
     <link rel="stylesheet" href="./popup.css" />
   </head>
   <body>
     <main class="popup">
       <header class="popup-header">
-        <img src="../assets/logo.png" alt="Image Collector" class="logo" />
+        <img src="../assets/logo.png" alt="Image Collector" data-i18n-alt="extensionName" class="logo" />
         <div>
-          <h1>Image Collector</h1>
-          <p>选择一个操作</p>
+          <h1 data-i18n="extensionName">Image Collector</h1>
+          <p data-i18n="chooseAction">选择一个操作</p>
         </div>
       </header>
 
       <div class="actions">
-        <button id="openList" class="action-btn list" type="button">收集列表</button>
-        <button id="parsePage" class="action-btn parse" type="button">解析页面</button>
+        <button id="openList" class="action-btn list" type="button" data-i18n="collectionList">收集列表</button>
+        <button id="parsePage" class="action-btn parse" type="button" data-i18n="parsePage">解析页面</button>
       </div>
-      <p class="hint">解析页面会提取当前标签页中较大的图片供你选择添加。</p>
+      <p class="hint" data-i18n="parsePageHint">解析页面会提取当前标签页中较大的图片供你选择添加。</p>
+      <label class="language-control" for="languageSelect">
+        <span data-i18n="language">语言</span>
+        <select id="languageSelect" data-language-select>
+          <option value="auto" data-i18n="languageAuto">跟随浏览器</option>
+          <option value="zh-CN" data-i18n="languageChinese">简体中文</option>
+          <option value="en" data-i18n="languageEnglish">English</option>
+        </select>
+      </label>
     </main>
     <script type="module" src="./popup.js"></script>
   </body>

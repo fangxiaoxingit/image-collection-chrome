@@ -1,10 +1,10 @@
-# 发布指南
+# Release guide
 
-`extension/manifest.json` 的 `version` 是唯一版本来源。标签必须为 `v` 加上该版本，例如版本 `1.0.1` 对应标签 `v1.0.1`。
+The `version` in `extension/manifest.json` is the single source of truth. A release tag must be `v` followed by that exact version: for example, version `1.1.1` requires tag `v1.1.1`. The extension is distributed through GitHub Releases.
 
-## 本地验证与打包
+## Validate and package locally
 
-需要 Node.js 22 和 Python 3.9 或更新版本，无需安装第三方依赖。在仓库根目录运行：
+Use Node.js 22 and Python 3.9 or later. No third-party dependencies are required. Run these commands from the repository root:
 
 ```sh
 python3 -m unittest discover -s tests -v
@@ -15,44 +15,44 @@ done
 python3 scripts/package.py
 ```
 
-安装包输出到 `dist/`，包含：
+The package script writes these files to `dist/`:
 
-- `image-collector-<版本>.zip`：对应版本的安装包。
-- `image-collector.zip`：相同内容的固定文件名，供最新版下载链接使用。
-- `SHA256SUMS.txt`：两个安装包的 SHA-256 校验值。
+- `image-collector-<version>.zip`: the installation package for the manifest version.
+- `image-collector.zip`: the same package with a fixed filename for the latest-download link.
+- `SHA256SUMS.txt`: SHA-256 checksums for both ZIP files.
 
-ZIP 根目录直接包含 `manifest.json`，解压后即可加载。打包脚本只允许插件运行文件和 MIT 许可证进入安装包；意外文件及符号链接会使打包失败，系统 `.DS_Store` 会被跳过。
+The ZIP contains `manifest.json` at its root, so users can extract it and load that folder directly. Only extension runtime files and the MIT license enter the package. Unexpected files or directories and symbolic links cause packaging to fail; regular `.DS_Store` files are skipped.
 
-如新增插件运行文件，请同步更新 `scripts/package.py` 的白名单。
+The runtime allowlist includes `utils/i18n.js`, `_locales/en/messages.json`, and `_locales/zh_CN/messages.json`. Packaging checks that `default_locale` names a bundled catalog, that the localized name, description, and action title reference valid messages, and that both catalogs contain nonempty translations for those metadata keys. Update the allowlist in `scripts/package.py` when adding runtime files.
 
-## 发布新版本
+Before releasing, load the unpacked extension and check the popup, collection list, parsing page, and context menu in English and Simplified Chinese. Check automatic language selection, manual choices persisting after reopening a page, and updates across open pages. Also verify that switching date display languages preserves local dates and Monday-based weeks. After reloading an updated extension at `chrome://extensions/`, refresh its open pages.
 
-1. 更新 `extension/manifest.json` 中的版本，使用数字版本，例如 `1.0.1`。
-2. 完成本地验证，提交代码，再创建对应的版本标签：
+## Publish a new version
+
+1. Update `extension/manifest.json` to a numeric version, such as `1.1.1`.
+2. Complete local validation and commit all intended changes before tagging:
 
 ```sh
-git add extension/manifest.json
-git commit -m "发布 1.0.1 版本"
-git tag -a v1.0.1 -m "发布 v1.0.1"
+git add -A
+git commit -m "发布 1.1.1 版本"
+git tag -a v1.1.1 -m "v1.1.1"
 git push origin main
-git push origin v1.0.1
+git push origin v1.1.1
 ```
 
-命令中的版本需替换为待发布版本；其他改动也应在打标签前提交。
+Replace the example version with the version being released. The commit message follows this repository's Chinese commit-message convention.
 
-GitHub Actions 会校验代码、测试打包脚本，并核对版本标签。全部通过后自动创建 Release、生成更新记录并上传安装包和校验文件，无需配置个人访问令牌。
+GitHub Actions validates the code, runs the package tests, and checks that the tag matches the manifest version. When all checks pass, it creates the release, generates release notes, and uploads the ZIP files and checksums. A personal access token is not required.
 
-## 触发方式
+## Workflow triggers
 
-| 触发方式 | 结果 |
+| Trigger | Result |
 | --- | --- |
-| 推送 `main` 或向 `main` 提交 PR | 校验并生成 Actions Artifact，不发布 Release。 |
-| 推送 `v*` 标签 | 校验版本一致后发布 Release。 |
-| 在 Actions 中手动运行，选择分支 | 校验并生成 Artifact。 |
-| 在 Actions 中手动运行，选择版本标签 | 发布或更新该标签的 Release。 |
+| Push to `main` or open a pull request targeting `main` | Validate and create an Actions artifact without publishing a release. |
+| Push a `v*` tag | Publish a release after validating the version match. |
+| Run the workflow manually on a branch | Validate and create an artifact. |
+| Run the workflow manually on a version tag | Publish or update the release for that tag. |
 
-Artifact 保留 30 天。重跑已发布标签会替换该 Release 的附件，保留已有发布说明；新版本应使用新标签。
+Artifacts are kept for 30 days. Rerunning an already published tag replaces its release attachments and retains existing release notes. Use a new tag for a new version.
 
-固定最新版下载链接：
-
-[image-collector.zip](https://github.com/fangxiaoxingit/image-collection-chrome/releases/latest/download/image-collector.zip)
+Fixed latest-download link: [image-collector.zip](https://github.com/fangxiaoxingit/image-collection-chrome/releases/latest/download/image-collector.zip).

@@ -15,6 +15,7 @@ import {
 } from '../utils/storage.js'
 import { batchDownload } from '../utils/download.js'
 import { groupImagesByDate } from '../utils/date-groups.js'
+import { bindLanguageSelector, getLanguage, initI18n, t, translatePage } from '../utils/i18n.js'
 
 const state = {
   list: [],
@@ -22,7 +23,8 @@ const state = {
   groupPeriod: 'day',
   queryParam: 'format=jpg&name=large',
   downloadBaseDir: '',
-  previewIndex: -1
+  previewIndex: -1,
+  modalMode: null
 }
 
 const elements = {
@@ -69,11 +71,11 @@ function getSelectedItems() {
 
 function updateSelectedCount() {
   const selectedCount = getSelectedItems().length
-  elements.count.textContent = `已勾选 ${selectedCount} 项`
+  elements.count.textContent = t('selectedCount', { count: selectedCount })
 }
 
 function updateTotalCount() {
-  elements.totalCount.textContent = `(共 ${state.list.length} 张)`
+  elements.totalCount.textContent = t('totalCount', { count: state.list.length })
 }
 
 function toggleEmpty() {
@@ -92,6 +94,7 @@ function closeModal() {
 }
 
 function setModalMode(mode) {
+  state.modalMode = mode
   const isGuide = mode === 'guide'
   const isImage = mode === 'image'
   const isConfig = mode === 'config'
@@ -112,23 +115,14 @@ function syncConfigInputsFromState() {
 
 function openGuideModal() {
   state.previewIndex = -1
-  elements.modalTitle.textContent = '下载设置说明'
-  elements.modalText.innerHTML = `
-    <p>按下面 4 步设置后，批量下载会更顺畅：</p>
-    <ol>
-      <li>在浏览器地址栏打开 <code>chrome://settings/downloads</code>。</li>
-      <li>关闭“下载前询问每个文件的保存位置（Ask where to save each file before downloading）”。</li>
-      <li>回到插件页面，点“更多功能”，在“下载目录”填写子目录（例如 <code>image-collector</code>）；留空就使用系统默认下载目录。</li>
-      <li>打开 <code>chrome://extensions/</code>，点击本插件“重新加载”后再测试下载。</li>
-    </ol>
-  `
+  elements.modalTitle.textContent = t('downloadGuideTitle')
   setModalMode('guide')
   setModalVisible(true)
 }
 
 function openMoreModal() {
   state.previewIndex = -1
-  elements.modalTitle.textContent = '更多功能'
+  elements.modalTitle.textContent = t('moreActions')
   syncConfigInputsFromState()
   setModalMode('config')
   setModalVisible(true)
@@ -152,9 +146,9 @@ function openImageModalByIndex(index) {
 
   state.previewIndex = index
   const item = state.viewList[index]
-  elements.modalTitle.textContent = `图片预览 (${index + 1}/${state.viewList.length})`
+  elements.modalTitle.textContent = t('imagePreviewTitle', { index: index + 1, count: state.viewList.length })
   elements.modalImage.src = item.url
-  elements.modalImage.alt = item.url
+  elements.modalImage.alt = t('previewImageAlt')
   setModalMode('image')
   updatePreviewNavState()
   setModalVisible(true)
@@ -171,12 +165,12 @@ function handlePreviewStep(step) {
 
   const nextIndex = state.previewIndex + step
   if (nextIndex < 0) {
-    alert('已经不存在上一张壁纸。')
+    alert(t('noPreviousWallpaper'))
     return
   }
 
   if (nextIndex >= state.viewList.length) {
-    alert('已经不存在下一张壁纸。')
+    alert(t('noNextWallpaper'))
     return
   }
 
@@ -194,18 +188,18 @@ async function handlePreviewDownload() {
   })
 
   if (result.successCount > 0) {
-    alert('当前壁纸下载成功。')
+    alert(t('wallpaperDownloadSucceeded'))
     return
   }
 
-  alert('当前壁纸下载失败，请稍后重试。')
+  alert(t('wallpaperDownloadFailed'))
 }
 
 async function handlePreviewDelete() {
   const item = getCurrentPreviewItem()
   if (!item) return
 
-  const shouldDelete = confirm('确认删除当前壁纸吗？')
+  const shouldDelete = confirm(t('deleteCurrentWallpaperConfirm'))
   if (!shouldDelete) return
 
   const removedIndex = state.previewIndex
@@ -214,7 +208,7 @@ async function handlePreviewDelete() {
 
   if (state.list.length === 0) {
     closeModal()
-    alert('已经不存在下一张壁纸或者上一张壁纸。')
+    alert(t('noMoreWallpapers'))
     return
   }
 
@@ -226,12 +220,12 @@ async function handlePreviewDelete() {
   const prevIndex = state.viewList.length - 1
   if (prevIndex >= 0) {
     openImageModalByIndex(prevIndex)
-    alert('已不存在下一张壁纸，已切换到上一张壁纸。')
+    alert(t('switchedToPreviousWallpaper'))
     return
   }
 
   closeModal()
-  alert('已经不存在下一张壁纸或者上一张壁纸。')
+  alert(t('noMoreWallpapers'))
 }
 
 function isImagePreviewOpen() {
@@ -286,7 +280,8 @@ function createCard(item, index) {
   const delButton = document.createElement('button')
   delButton.className = 'delete delete-float'
   delButton.type = 'button'
-  delButton.textContent = '删除'
+  delButton.dataset.i18n = 'delete'
+  delButton.textContent = t('delete')
   delButton.addEventListener('click', async (event) => {
     event.preventDefault()
     event.stopPropagation()
@@ -303,7 +298,10 @@ function createCard(item, index) {
 
   const checkboxLabel = document.createElement('label')
   checkboxLabel.className = 'check-label'
-  checkboxLabel.textContent = '勾选'
+  const checkboxText = document.createElement('span')
+  checkboxText.dataset.i18n = 'selectImage'
+  checkboxText.textContent = t('selectImage')
+  checkboxLabel.appendChild(checkboxText)
 
   const checkbox = document.createElement('input')
   checkbox.type = 'checkbox'
@@ -338,7 +336,7 @@ function createCard(item, index) {
 
 function renderList() {
   elements.list.innerHTML = ''
-  const groups = groupImagesByDate(state.list, state.groupPeriod)
+  const groups = groupImagesByDate(state.list, state.groupPeriod, getLanguage())
   state.viewList = groups.flatMap((group) => group.items)
   let cardIndex = 0
   const fragment = document.createDocumentFragment()
@@ -346,6 +344,7 @@ function renderList() {
   for (const group of groups) {
     const section = document.createElement('section')
     section.className = 'date-group'
+    section.dataset.groupKey = group.key
     const header = document.createElement('div')
     header.className = 'date-group-header'
     const title = document.createElement('h2')
@@ -353,7 +352,7 @@ function renderList() {
     title.textContent = group.label
     const count = document.createElement('span')
     count.className = 'date-group-count'
-    count.textContent = `${group.items.length} 张`
+    count.textContent = t('groupImageCount', { count: group.items.length })
     header.append(title, count)
     const grid = document.createElement('div')
     grid.className = 'grid'
@@ -407,18 +406,30 @@ function normalizeDownloadDirValue(value) {
     .replace(/\/+$/, '')
 }
 
+let configSaveRevision = 0
+
 async function persistConfigFromInputs() {
-  const nextQuery = normalizeQueryParamValue(elements.configQueryParam.value)
-  const nextDir = normalizeDownloadDirValue(elements.configDownloadDir.value)
+  const revision = ++configSaveRevision
+  const queryInput = elements.configQueryParam.value
+  const dirInput = elements.configDownloadDir.value
+  const nextQuery = normalizeQueryParamValue(queryInput)
+  const nextDir = normalizeDownloadDirValue(dirInput)
 
   const [savedQuery, savedDir] = await Promise.all([
     setDownloadQueryParam(nextQuery),
     setDownloadBaseDir(nextDir)
   ])
 
+  if (revision !== configSaveRevision) return
+
   state.queryParam = savedQuery
   state.downloadBaseDir = savedDir
-  syncConfigInputsFromState()
+  if (elements.configQueryParam.value === queryInput) {
+    elements.configQueryParam.value = savedQuery
+  }
+  if (elements.configDownloadDir.value === dirInput) {
+    elements.configDownloadDir.value = savedDir
+  }
 }
 
 function createFallbackId() {
@@ -574,12 +585,12 @@ async function handleImportJsonFile(event) {
     const settingsChanged = await applyImportedSettings(settings)
 
     if (addedCount === 0 && !settingsChanged) {
-      alert('导入完成，但没有可新增的数据。')
+      alert(t('importNoChanges'))
     } else {
-      alert(`导入完成：新增 ${addedCount} 张图片${settingsChanged ? '，并更新了配置' : ''}。`)
+      alert(t(settingsChanged ? 'importCompletedWithSettings' : 'importCompleted', { count: addedCount }))
     }
   } catch (error) {
-    alert(`导入失败：${String(error)}`)
+    alert(t('importFailed', { error: String(error) }))
   } finally {
     event.target.value = ''
   }
@@ -606,7 +617,7 @@ function buildDownloadFolder() {
 async function handleBatchDownload() {
   const selectedItems = getSelectedItems()
   if (selectedItems.length === 0) {
-    alert('请先勾选至少一张图片')
+    alert(t('selectImageFirst'))
     return
   }
 
@@ -615,18 +626,18 @@ async function handleBatchDownload() {
     queryParamOverride: state.queryParam,
     folder: buildDownloadFolder()
   })
-  alert(`下载完成：成功 ${result.successCount}，失败 ${result.failCount}`)
+  alert(t('downloadCompleted', { succeeded: result.successCount, failed: result.failCount }))
 }
 
 function buildMailtoUrlFromSelected(selectedList) {
   const body = selectedList.map((item) => item.url).join('\n')
-  return `mailto:?subject=${encodeURIComponent('图片列表')}&body=${encodeURIComponent(body)}`
+  return `mailto:?subject=${encodeURIComponent(t('mailSubject'))}&body=${encodeURIComponent(body)}`
 }
 
 function handleSendMail() {
   const selectedList = getSelectedItems()
   if (selectedList.length === 0) {
-    alert('请先勾选至少一张图片后再发送邮件。')
+    alert(t('selectImageBeforeMail'))
     return
   }
 
@@ -634,14 +645,14 @@ function handleSendMail() {
 
   // mailto URL is handled by the OS/default mail client; too long payload may be rejected by some clients.
   if (url.length > 1800) {
-    alert('选中图片较多，邮件内容可能过长，建议分批发送。')
+    alert(t('mailTooLong'))
   }
 
   chrome.tabs.create({ url })
 }
 
 async function handleClear() {
-  const shouldClear = confirm('确定清空全部采集记录吗？')
+  const shouldClear = confirm(t('clearAllConfirm'))
   if (!shouldClear) return
 
   state.list = await clearAll()
@@ -651,11 +662,11 @@ async function handleClear() {
 async function handleBatchDelete() {
   const selectedItems = getSelectedItems()
   if (selectedItems.length === 0) {
-    alert('请先勾选至少一张图片')
+    alert(t('selectImageFirst'))
     return
   }
 
-  const shouldDelete = confirm(`确定删除选中的 ${selectedItems.length} 张图片吗？`)
+  const shouldDelete = confirm(t('batchDeleteConfirm', { count: selectedItems.length }))
   if (!shouldDelete) return
 
   const idsToDelete = selectedItems.map((item) => item.id)
@@ -766,6 +777,38 @@ function bindEvents() {
 
   document.addEventListener('keydown', handleGlobalKeydown)
 }
+
+function localizePage() {
+  const scrollX = window.scrollX
+  const scrollY = window.scrollY
+  const panel = elements.modalOverlay.querySelector('.modal-panel')
+  const panelScrollTop = panel.scrollTop
+  const panelScrollLeft = panel.scrollLeft
+  translatePage()
+  updateSelectedCount()
+  updateTotalCount()
+  const groups = new Map(groupImagesByDate(state.list, state.groupPeriod, getLanguage()).map((group) => [group.key, group]))
+  for (const section of elements.list.querySelectorAll('.date-group')) {
+    const group = groups.get(section.dataset.groupKey)
+    if (!group) continue
+    section.querySelector('.date-group-title').textContent = group.label
+    section.querySelector('.date-group-count').textContent = t('groupImageCount', { count: group.items.length })
+  }
+  if (state.modalMode === 'guide') elements.modalTitle.textContent = t('downloadGuideTitle')
+  if (state.modalMode === 'config') elements.modalTitle.textContent = t('moreActions')
+  if (state.modalMode === 'image' && state.previewIndex >= 0) {
+    elements.modalTitle.textContent = t('imagePreviewTitle', {
+      index: state.previewIndex + 1,
+      count: state.viewList.length
+    })
+  }
+  window.scrollTo(scrollX, scrollY)
+  panel.scrollTop = panelScrollTop
+  panel.scrollLeft = panelScrollLeft
+}
+
+await initI18n(localizePage)
+bindLanguageSelector(document.getElementById('languageSelect'))
 
 closeModal()
 bindEvents()

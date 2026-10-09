@@ -5,12 +5,13 @@ function dateKey(date) {
   return `${year}-${month}-${day}`
 }
 
-function dateLabel(date) {
+function dateLabel(date, formatter) {
+  if (formatter) return formatter.format(date)
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
 }
 
-function groupInfo(date, period) {
-  if (!date) return { key: 'unknown', label: '添加日期未知' }
+function groupInfo(date, period, formatter) {
+  if (!date) return { key: 'unknown', label: formatter ? 'Date added unknown' : '添加日期未知' }
 
   const start = new Date(date.getTime())
   start.setHours(0, 0, 0, 0)
@@ -18,7 +19,7 @@ function groupInfo(date, period) {
     start.setDate(1)
     return {
       key: dateKey(start).slice(0, -3),
-      label: `${start.getFullYear()}年${start.getMonth() + 1}月`
+      label: formatter ? formatter.format(start) : `${start.getFullYear()}年${start.getMonth() + 1}月`
     }
   }
   if (period === 'week') {
@@ -26,13 +27,16 @@ function groupInfo(date, period) {
     start.setDate(start.getDate() - (start.getDay() + 6) % 7)
     const end = new Date(start.getTime())
     end.setDate(end.getDate() + 6)
-    return { key: dateKey(start), label: `${dateLabel(start)} 至 ${dateLabel(end)}` }
+    return { key: dateKey(start), label: `${dateLabel(start, formatter)}${formatter ? ' – ' : ' 至 '}${dateLabel(end, formatter)}` }
   }
-  return { key: dateKey(start), label: dateLabel(start) }
+  return { key: dateKey(start), label: dateLabel(start, formatter) }
 }
 
-export function groupImagesByDate(items, period = 'day') {
+export function groupImagesByDate(items, period = 'day', language = 'zh-CN') {
   if (!['day', 'week', 'month'].includes(period)) period = 'day'
+  const formatter = language === 'en' ? new Intl.DateTimeFormat('en', {
+    year: 'numeric', month: 'long', ...(period === 'month' ? {} : { day: 'numeric' })
+  }) : null
   const entries = (Array.isArray(items) ? items : []).map((item, index) => {
     const timestamp = item?.createdAt
     const date = typeof timestamp === 'number' && Number.isFinite(timestamp)
@@ -45,7 +49,7 @@ export function groupImagesByDate(items, period = 'day') {
 
   const groups = new Map()
   for (const entry of entries) {
-    const { key, label } = groupInfo(entry.date, period)
+    const { key, label } = groupInfo(entry.date, period, formatter)
     if (!groups.has(key)) groups.set(key, { key, label, items: [] })
     groups.get(key).items.push(entry.item)
   }

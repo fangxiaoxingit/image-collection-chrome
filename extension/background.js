@@ -1,4 +1,5 @@
 import { addImageIfNotExists } from './utils/storage.js'
+import { LANGUAGE_KEY, initI18n, refreshI18n, t } from './utils/i18n.js'
 
 const MENU_ID = 'image_collector_save_image'
 const MENU_CONTEXTS = [
@@ -37,6 +38,7 @@ function pickTargetUrl(info, tab) {
 }
 
 let contextMenuInitializing = false
+let menuLanguageRefreshPending = false
 
 function runContextMenuOperation(operation) {
   return new Promise((resolve, reject) => {
@@ -57,18 +59,54 @@ async function createContextMenu() {
   contextMenuInitializing = true
 
   try {
+    await initI18n()
+    await refreshI18n()
     await runContextMenuOperation((callback) => chrome.contextMenus.removeAll(callback))
     await runContextMenuOperation((callback) => chrome.contextMenus.create({
       id: MENU_ID,
-      title: '收集图片',
+      title: t('collectImage'),
       contexts: MENU_CONTEXTS
     }, callback))
   } catch (error) {
-    console.error('初始化收集图片菜单失败：', error)
+    console.error('Unable to initialize image collection menu:', error)
   } finally {
     contextMenuInitializing = false
+    if (menuLanguageRefreshPending) {
+      menuLanguageRefreshPending = false
+      refreshContextMenuLanguage()
+    }
   }
 }
+
+async function refreshContextMenuLanguage() {
+  try {
+    await refreshI18n()
+    if (contextMenuInitializing) {
+      menuLanguageRefreshPending = true
+      return
+    }
+    await runContextMenuOperation((callback) => chrome.contextMenus.update(MENU_ID, {
+      title: t('collectImage')
+    }, callback))
+  } catch (error) {
+    console.error('Unable to update image collection menu language:', error)
+  }
+}
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && Object.prototype.hasOwnProperty.call(changes, LANGUAGE_KEY)) {
+    refreshContextMenuLanguage()
+  }
+})
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type !== 'image_collector_language_changed') return
+  ;(async () => {
+    await refreshContextMenuLanguage()
+    sendResponse({ updated: true })
+  })()
+  return true
+})
 
 chrome.runtime.onInstalled.addListener(() => {
   createContextMenu()
@@ -85,3 +123,5 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
   await addImageIfNotExists(targetUrl)
 })
+
+refreshContextMenuLanguage()

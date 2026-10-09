@@ -1,0 +1,275 @@
+{
+  "extensionName": {
+    "message": "Image Collector"
+  },
+  "extensionDescription": {
+    "message": "右键采集网页图片，支持批量下载、邮件发送与页面解析。"
+  },
+  "collectImage": {
+    "message": "收集图片"
+  },
+  "popupTitle": {
+    "message": "Image Collector"
+  },
+  "listPageTitle": {
+    "message": "收集列表 - Image Collector"
+  },
+  "parsePageTitle": {
+    "message": "解析页面 - Image Collector"
+  },
+  "chooseAction": {
+    "message": "选择一个操作"
+  },
+  "collectionList": {
+    "message": "收集列表"
+  },
+  "parsePage": {
+    "message": "解析页面"
+  },
+  "parsePageHint": {
+    "message": "解析页面会提取当前标签页中较大的图片供你选择添加。"
+  },
+  "language": {
+    "message": "语言"
+  },
+  "languageAuto": {
+    "message": "跟随浏览器"
+  },
+  "languageChinese": {
+    "message": "简体中文"
+  },
+  "languageEnglish": {
+    "message": "English"
+  },
+  "pageUrl": {
+    "message": "网址"
+  },
+  "pageUrlPlaceholder": {
+    "message": "输入或粘贴网址，例如 https://example.com"
+  },
+  "parseUrl": {
+    "message": "解析网址"
+  },
+  "selectAll": {
+    "message": "全选"
+  },
+  "unselectAll": {
+    "message": "全不选"
+  },
+  "addSelected": {
+    "message": "添加已选"
+  },
+  "refreshCandidates": {
+    "message": "刷新候选"
+  },
+  "openCollectionList": {
+    "message": "打开收集列表"
+  },
+  "selectedCount": {
+    "message": "已勾选 {count} 项"
+  },
+  "totalCount": {
+    "message": "(共 {count} 张)"
+  },
+  "groupImageCount": {
+    "message": "{count} 张"
+  },
+  "parseEmpty": {
+    "message": "暂无解析结果。请点击插件图标后选择“解析页面”。"
+  },
+  "collectionEmpty": {
+    "message": "暂无已采集图片，请在网页图片上右键选择“收集图片”。"
+  },
+  "close": {
+    "message": "关闭"
+  },
+  "previousImage": {
+    "message": "上一张"
+  },
+  "nextImage": {
+    "message": "下一张"
+  },
+  "previewImageAlt": {
+    "message": "预览图片"
+  },
+  "imagePreviewTitle": {
+    "message": "图片预览 ({index}/{count})"
+  },
+  "selectImage": {
+    "message": "勾选"
+  },
+  "unknown": {
+    "message": "未知"
+  },
+  "imageMetrics": {
+    "message": "分辨率 {width}x{height} | 大小 {size}"
+  },
+  "unknownSource": {
+    "message": "当前来源：未知页面"
+  },
+  "currentTabMissing": {
+    "message": "未找到当前标签页。"
+  },
+  "parseFailed": {
+    "message": "解析失败：{error}"
+  },
+  "noPreviousImage": {
+    "message": "已经不存在上一张图片。"
+  },
+  "noNextImage": {
+    "message": "已经不存在下一张图片。"
+  },
+  "selectImageFirst": {
+    "message": "请先勾选至少一张图片。"
+  },
+  "addCompleted": {
+    "message": "添加完成：新增 {added}，跳过 {skipped}"
+  },
+  "pageLoadTimeout": {
+    "message": "页面加载超时，请稍后重试。"
+  },
+  "enterUrlFirst": {
+    "message": "请先输入一个网址。"
+  },
+  "invalidUrl": {
+    "message": "网址格式不正确，请检查后重试。"
+  },
+  "httpPagesOnly": {
+    "message": "仅支持解析 http/https 页面。"
+  },
+  "refresh": {
+    "message": "刷新"
+  },
+  "dateGrouping": {
+    "message": "日期排序"
+  },
+  "dateGroupingHint": {
+    "message": "按添加日期分组，最新在前"
+  },
+  "groupByDay": {
+    "message": "按日分组"
+  },
+  "groupByWeek": {
+    "message": "按周分组"
+  },
+  "groupByMonth": {
+    "message": "按月分组"
+  },
+  "download": {
+    "message": "下载"
+  },
+  "batchDelete": {
+    "message": "批量删除"
+  },
+  "sendMail": {
+    "message": "发送邮件"
+  },
+  "clearAll": {
+    "message": "清空"
+  },
+  "moreActions": {
+    "message": "更多功能"
+  },
+  "usageGuide": {
+    "message": "使用说明"
+  },
+  "delete": {
+    "message": "删除"
+  },
+  "downloadDirectory": {
+    "message": "下载目录"
+  },
+  "downloadDirectoryPlaceholder": {
+    "message": "留空=系统下载目录"
+  },
+  "urlParameters": {
+    "message": "URL 参数"
+  },
+  "exportJson": {
+    "message": "导出 JSON"
+  },
+  "importJson": {
+    "message": "导入 JSON"
+  },
+  "importJsonHint": {
+    "message": "支持导入本插件导出的 JSON，也兼容仅图片数组格式。"
+  },
+  "downloadGuideTitle": {
+    "message": "下载设置说明"
+  },
+  "guideIntro": {
+    "message": "按下面 4 步设置后，批量下载会更顺畅："
+  },
+  "guideOpenDownloads": {
+    "message": "在浏览器地址栏打开"
+  },
+  "guideSentenceEnd": {
+    "message": "。"
+  },
+  "guideDisablePrompt": {
+    "message": "关闭“下载前询问每个文件的保存位置（Ask where to save each file before downloading）”。"
+  },
+  "guideDownloadFolderBefore": {
+    "message": "回到插件页面，点“更多功能”，在“下载目录”填写子目录（例如"
+  },
+  "guideDownloadFolderAfter": {
+    "message": "）；留空就使用系统默认下载目录。"
+  },
+  "guideOpenExtensions": {
+    "message": "打开"
+  },
+  "guideReloadExtension": {
+    "message": "，点击本插件“重新加载”后再测试下载。"
+  },
+  "noPreviousWallpaper": {
+    "message": "已经不存在上一张壁纸。"
+  },
+  "noNextWallpaper": {
+    "message": "已经不存在下一张壁纸。"
+  },
+  "wallpaperDownloadSucceeded": {
+    "message": "当前壁纸下载成功。"
+  },
+  "wallpaperDownloadFailed": {
+    "message": "当前壁纸下载失败，请稍后重试。"
+  },
+  "deleteCurrentWallpaperConfirm": {
+    "message": "确认删除当前壁纸吗？"
+  },
+  "noMoreWallpapers": {
+    "message": "已经不存在下一张壁纸或者上一张壁纸。"
+  },
+  "switchedToPreviousWallpaper": {
+    "message": "已不存在下一张壁纸，已切换到上一张壁纸。"
+  },
+  "importNoChanges": {
+    "message": "导入完成，但没有可新增的数据。"
+  },
+  "importCompleted": {
+    "message": "导入完成：新增 {count} 张图片。"
+  },
+  "importCompletedWithSettings": {
+    "message": "导入完成：新增 {count} 张图片，并更新了配置。"
+  },
+  "importFailed": {
+    "message": "导入失败：{error}"
+  },
+  "downloadCompleted": {
+    "message": "下载完成：成功 {succeeded}，失败 {failed}"
+  },
+  "mailSubject": {
+    "message": "图片列表"
+  },
+  "selectImageBeforeMail": {
+    "message": "请先勾选至少一张图片后再发送邮件。"
+  },
+  "mailTooLong": {
+    "message": "选中图片较多，邮件内容可能过长，建议分批发送。"
+  },
+  "clearAllConfirm": {
+    "message": "确定清空全部采集记录吗？"
+  },
+  "batchDeleteConfirm": {
+    "message": "确定删除选中的 {count} 张图片吗？"
+  }
+}

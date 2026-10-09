@@ -18,7 +18,8 @@ RUNTIME_FILES = (
     'pages/parse.html', 'pages/parse.css', 'pages/parse.js',
     'pages/popup.html', 'pages/popup.css', 'pages/popup.js',
     'utils/storage.js', 'utils/download.js', 'utils/hash.js',
-    'utils/date-groups.js',
+    'utils/date-groups.js', 'utils/i18n.js',
+    '_locales/en/messages.json', '_locales/zh_CN/messages.json',
 )
 
 
@@ -30,7 +31,8 @@ def validate_inputs(root, output, release_tag):
         raise ValueError('output directory must be outside extension')
 
     expected = set(RUNTIME_FILES)
-    directories = {str(Path(name).parent) for name in expected} - {'.'}
+    directories = {parent.as_posix() for name in expected
+                   for parent in Path(name).parents if parent != Path('.')}
     found = set()
     for path in sorted(extension.rglob('*')):
         name = path.relative_to(extension).as_posix()
@@ -68,6 +70,33 @@ def validate_inputs(root, output, release_tag):
     action = manifest.get('action', {})
     if not isinstance(background, dict) or not isinstance(action, dict):
         raise ValueError('background and action must be manifest objects')
+
+    catalog_names = sorted(name for name in expected if name.startswith('_locales/'))
+    default_locale = manifest.get('default_locale')
+    if (not isinstance(default_locale, str)
+            or f'_locales/{default_locale}/messages.json' not in catalog_names):
+        raise ValueError('manifest.default_locale must name a packaged locale catalog')
+    metadata_keys = set()
+    for field, value in (('name', manifest.get('name')),
+                         ('description', manifest.get('description')),
+                         ('action.default_title', action.get('default_title'))):
+        match = re.fullmatch(r'__MSG_([A-Za-z0-9_]+)__', value) if isinstance(value, str) else None
+        if match is None:
+            raise ValueError(f'manifest.{field} must be a localized message reference')
+        metadata_keys.add(match.group(1))
+    for name in catalog_names:
+        try:
+            catalog = json.loads((extension / name).read_text(encoding='utf-8'))
+        except (json.JSONDecodeError, UnicodeDecodeError) as error:
+            raise ValueError(f'invalid locale catalog: {name}') from error
+        if not isinstance(catalog, dict):
+            raise ValueError(f'locale catalog must be an object: {name}')
+        for key in sorted(metadata_keys):
+            entry = catalog.get(key)
+            message = entry.get('message') if isinstance(entry, dict) else None
+            if not isinstance(message, str) or not message.strip():
+                raise ValueError(f'{name}: {key} must have a nonempty message string')
+
     if background.get('type') != 'module':
         raise ValueError('background.type must be module')
     resources = [background.get('service_worker'), action.get('default_popup')]

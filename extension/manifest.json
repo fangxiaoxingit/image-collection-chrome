@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Image Collector",
-  "version": "1.1.0",
-  "description": "Collect image URLs from context menu and manage batch downloads.",
+  "name": "__MSG_extensionName__",
+  "version": "1.2.0",
+  "description": "__MSG_extensionDescription__",
+  "default_locale": "en",
   "permissions": [
     "contextMenus",
     "storage",
@@ -25,7 +26,7 @@
     "128": "assets/logo.png"
   },
   "action": {
-    "default_title": "Image Collector",
+    "default_title": "__MSG_extensionName__",
     "default_popup": "pages/popup.html",
     "default_icon": {
       "16": "assets/logo.png",

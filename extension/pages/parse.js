@@ -1,4 +1,5 @@
 import { addImagesIfNotExists, getParseCandidates, setParseCandidates } from '../utils/storage.js'
+import { bindLanguageSelector, initI18n, t, translatePage } from '../utils/i18n.js'
 
 const MIN_WIDTH = 120
 const MIN_HEIGHT = 120
@@ -38,7 +39,7 @@ function shortenUrl(url) {
 
 function formatBytes(sizeBytes) {
   if (typeof sizeBytes !== 'number' || !Number.isFinite(sizeBytes) || sizeBytes <= 0) {
-    return '未知'
+    return t('unknown')
   }
 
   const units = ['B', 'KB', 'MB', 'GB']
@@ -55,12 +56,12 @@ function formatBytes(sizeBytes) {
 }
 
 function buildMetricsText(item) {
-  return `分辨率 ${item.width}x${item.height} | 大小 ${formatBytes(item.sizeBytes)}`
+  return t('imageMetrics', { width: item.width, height: item.height, size: formatBytes(item.sizeBytes) })
 }
 
 function updateCount() {
   const selectedCount = state.items.filter((item) => item.selected).length
-  elements.count.textContent = `已勾选 ${selectedCount} 项`
+  elements.count.textContent = t('selectedCount', { count: selectedCount })
 }
 
 function toggleEmpty() {
@@ -91,9 +92,9 @@ function openPreviewByIndex(index) {
 
   state.previewIndex = index
   const item = state.items[index]
-  elements.previewTitle.textContent = `图片预览 (${index + 1}/${state.items.length})`
+  elements.previewTitle.textContent = t('imagePreviewTitle', { index: index + 1, count: state.items.length })
   elements.previewImage.src = item.url
-  elements.previewImage.alt = item.alt || item.url
+  elements.previewImage.alt = item.alt || t('previewImageAlt')
   updatePreviewNavState()
   setPreviewVisible(true)
 }
@@ -103,12 +104,12 @@ function previewStep(step) {
 
   const nextIndex = state.previewIndex + step
   if (nextIndex < 0) {
-    alert('已经不存在上一张图片。')
+    alert(t('noPreviousImage'))
     return
   }
 
   if (nextIndex >= state.items.length) {
-    alert('已经不存在下一张图片。')
+    alert(t('noNextImage'))
     return
   }
 
@@ -173,7 +174,10 @@ function render() {
     lineTop.className = 'card-line'
 
     const label = document.createElement('label')
-    label.textContent = '勾选'
+    const labelText = document.createElement('span')
+    labelText.dataset.i18n = 'selectImage'
+    labelText.textContent = t('selectImage')
+    label.appendChild(labelText)
 
     const checkbox = document.createElement('input')
     checkbox.type = 'checkbox'
@@ -228,7 +232,7 @@ function normalizeCandidate(item, index) {
 
 function applyCandidates(payload) {
   state.sourceUrl = payload.sourceUrl || ''
-  elements.sourceUrl.textContent = state.sourceUrl || '当前来源：未知页面'
+  elements.sourceUrl.textContent = state.sourceUrl || t('unknownSource')
 
   const rawItems = Array.isArray(payload.items) ? payload.items : []
   state.items = rawItems.map((item, index) => normalizeCandidate(item, index))
@@ -249,12 +253,12 @@ function setAllSelected(selected) {
 async function addSelected() {
   const selectedUrls = state.items.filter((item) => item.selected).map((item) => item.url)
   if (selectedUrls.length === 0) {
-    alert('请先勾选至少一张图片。')
+    alert(t('selectImageFirst'))
     return
   }
 
   const result = await addImagesIfNotExists(selectedUrls)
-  alert(`添加完成：新增 ${result.addedCount}，跳过 ${result.skippedCount}`)
+  alert(t('addCompleted', { added: result.addedCount, skipped: result.skippedCount }))
 }
 
 function openList() {
@@ -325,7 +329,7 @@ async function waitTabComplete(tabId, timeoutMs = 18000) {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       chrome.tabs.onUpdated.removeListener(onUpdated)
-      reject(new Error('页面加载超时，请稍后重试。'))
+      reject(new Error(t('pageLoadTimeout')))
     }, timeoutMs)
 
     function onUpdated(updatedTabId, changeInfo) {
@@ -377,7 +381,7 @@ async function handleParseFormSubmit(event) {
   const raw = elements.parseUrlInput.value
   const normalized = normalizeInputUrl(raw)
   if (!normalized) {
-    alert('请先输入一个网址。')
+    alert(t('enterUrlFirst'))
     return
   }
 
@@ -385,12 +389,12 @@ async function handleParseFormSubmit(event) {
   try {
     parsed = new URL(normalized)
   } catch {
-    alert('网址格式不正确，请检查后重试。')
+    alert(t('invalidUrl'))
     return
   }
 
   if (!/^https?:$/.test(parsed.protocol)) {
-    alert('仅支持解析 http/https 页面。')
+    alert(t('httpPagesOnly'))
     return
   }
 
@@ -399,7 +403,7 @@ async function handleParseFormSubmit(event) {
   try {
     await parseByUrl(parsed.toString())
   } catch (error) {
-    alert(`解析失败：${String(error)}`)
+    alert(t('parseFailed', { error: String(error) }))
   } finally {
     elements.parseByUrl.disabled = false
   }
@@ -455,6 +459,32 @@ async function resolveCandidateSizes() {
     updateMetricsForItem(item.id)
   }
 }
+
+function localizePage() {
+  const scrollX = window.scrollX
+  const scrollY = window.scrollY
+  const panel = elements.previewOverlay.querySelector('.preview-panel')
+  const panelScrollTop = panel.scrollTop
+  const panelScrollLeft = panel.scrollLeft
+  translatePage()
+  elements.sourceUrl.textContent = state.sourceUrl || t('unknownSource')
+  updateCount()
+  for (const item of state.items) updateMetricsForItem(item.id)
+  if (state.previewIndex >= 0) {
+    const item = state.items[state.previewIndex]
+    elements.previewTitle.textContent = t('imagePreviewTitle', {
+      index: state.previewIndex + 1,
+      count: state.items.length
+    })
+    elements.previewImage.alt = item?.alt || t('previewImageAlt')
+  }
+  window.scrollTo(scrollX, scrollY)
+  panel.scrollTop = panelScrollTop
+  panel.scrollLeft = panelScrollLeft
+}
+
+await initI18n(localizePage)
+bindLanguageSelector(document.getElementById('languageSelect'))
 
 elements.selectAll.addEventListener('click', () => {
   setAllSelected(true)

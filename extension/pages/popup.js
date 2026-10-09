@@ -1,4 +1,5 @@
 import { setParseCandidates } from '../utils/storage.js'
+import { bindLanguageSelector, initI18n, t, translatePage } from '../utils/i18n.js'
 
 const MIN_WIDTH = 120
 const MIN_HEIGHT = 120
@@ -77,7 +78,7 @@ async function parseCurrentPage() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     if (!tab || !tab.id) {
-      alert('未找到当前标签页。')
+      alert(t('currentTabMissing'))
       return
     }
 
@@ -97,11 +98,14 @@ async function parseCurrentPage() {
     await chrome.tabs.create({ url: getParsePageUrl() })
     window.close()
   } catch (error) {
-    alert(`解析失败：${String(error)}`)
+    alert(t('parseFailed', { error: String(error) }))
   } finally {
     elements.parsePage.disabled = false
   }
 }
+
+await initI18n(() => translatePage())
+bindLanguageSelector(document.getElementById('languageSelect'))
 
 elements.openList.addEventListener('click', () => {
   openListPage()

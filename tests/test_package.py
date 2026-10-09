@@ -17,7 +17,8 @@ RUNTIME_FILES = (
     'pages/parse.html', 'pages/parse.css', 'pages/parse.js',
     'pages/popup.html', 'pages/popup.css', 'pages/popup.js',
     'utils/storage.js', 'utils/download.js', 'utils/hash.js',
-    'utils/date-groups.js',
+    'utils/date-groups.js', 'utils/i18n.js',
+    '_locales/en/messages.json', '_locales/zh_CN/messages.json',
 )
 
 
@@ -34,13 +35,28 @@ class PackageTests(unittest.TestCase):
             path.write_bytes(('runtime:' + name).encode())
         self.manifest = {
             'manifest_version': 3,
-            'name': 'Image Collector',
+            'name': '__MSG_extensionName__',
             'version': '1.0.0',
+            'description': '__MSG_extensionDescription__',
+            'default_locale': 'en',
             'background': {'service_worker': 'background.js', 'type': 'module'},
             'icons': {'128': 'assets/logo.png'},
             'action': {'default_popup': 'pages/popup.html',
+                       'default_title': '__MSG_extensionName__',
                        'default_icon': {'16': 'assets/logo.png'}},
         }
+        self.catalogs = {
+            'en': {
+                'extensionName': {'message': 'Image Collector'},
+                'extensionDescription': {'message': 'Collect and download web images.'},
+            },
+            'zh_CN': {
+                'extensionName': {'message': 'Image Collector'},
+                'extensionDescription': {'message': '收集和下载网页图片。'},
+            },
+        }
+        for locale in self.catalogs:
+            self.write_catalog(locale)
         self.write_manifest()
         (self.root / 'LICENSE').write_text('MIT test license\n')
         (self.root / 'scripts').mkdir()
@@ -49,6 +65,10 @@ class PackageTests(unittest.TestCase):
 
     def write_manifest(self):
         (self.extension / 'manifest.json').write_text(json.dumps(self.manifest))
+
+    def write_catalog(self, locale):
+        path = self.extension / '_locales' / locale / 'messages.json'
+        path.write_text(json.dumps(self.catalogs[locale]), encoding='utf-8')
 
     def run_package(self, output=None, tag=None):
         command = [sys.executable, str(self.root / 'scripts' / 'package.py')]
@@ -68,6 +88,7 @@ class PackageTests(unittest.TestCase):
         result = self.run_package(output, tag)
         self.assertNotEqual(result.returncode, 0, result.stdout)
         self.assertFalse(output.exists(), 'invalid inputs must not produce release files')
+        return result
 
     def test_archive_uses_installable_allowlist_and_excludes_repo_data(self):
         (self.root / 'README.md').write_text('repository documentation')
@@ -133,6 +154,83 @@ class PackageTests(unittest.TestCase):
     def test_unexpected_empty_extension_directory_is_rejected(self):
         (self.extension / 'user-data').mkdir()
         self.assert_rejected(self.root / 'extra-directory')
+
+    def test_nested_locale_files_are_packaged_with_localized_metadata(self):
+        output = self.root / 'localized'
+        self.assert_succeeded(self.run_package(output))
+        with zipfile.ZipFile(output / 'image-collector.zip') as archive:
+            manifest = json.loads(archive.read('manifest.json'))
+            self.assertEqual(manifest['default_locale'], 'en')
+            for locale in ('en', 'zh_CN'):
+                catalog = json.loads(archive.read(f'_locales/{locale}/messages.json'))
+                self.assertEqual(catalog['extensionName']['message'], 'Image Collector')
+                self.assertTrue(catalog['extensionDescription']['message'])
+            self.assertEqual(archive.read('utils/i18n.js'), b'runtime:utils/i18n.js')
+
+    def test_unexpected_nested_locale_directory_is_rejected(self):
+        (self.extension / '_locales' / 'en' / 'private').mkdir()
+        result = self.assert_rejected(self.root / 'extra-locale-directory')
+        self.assertIn('unexpected extension entry: _locales/en/private', result.stderr)
+
+    def test_symlinked_locale_ancestor_is_rejected(self):
+        outside = self.root / 'locales-copy'
+        (self.extension / '_locales').rename(outside)
+        (self.extension / '_locales').symlink_to(outside, target_is_directory=True)
+        result = self.assert_rejected(self.root / 'linked-locales')
+        self.assertIn('symlinks are not allowed: _locales', result.stderr)
+
+    def test_default_locale_must_have_a_packaged_catalog(self):
+        for index, locale in enumerate((None, '', 'fr', '../en', 1)):
+            with self.subTest(locale=locale):
+                if locale is None:
+                    self.manifest.pop('default_locale', None)
+                else:
+                    self.manifest['default_locale'] = locale
+                self.write_manifest()
+                result = self.assert_rejected(self.root / f'bad-locale-{index}')
+                self.assertIn('default_locale', result.stderr)
+
+    def test_localized_metadata_references_must_resolve_in_both_catalogs(self):
+        fields = ('name', 'description', 'default_title')
+        for index, field in enumerate(fields):
+            with self.subTest(field=field):
+                target = self.manifest['action'] if field == 'default_title' else self.manifest
+                original = target[field]
+                target[field] = '__MSG_missingMetadata__'
+                self.write_manifest()
+                result = self.assert_rejected(self.root / f'missing-metadata-{index}')
+                self.assertIn('missingMetadata', result.stderr)
+                target[field] = original
+
+    def test_invalid_locale_metadata_is_rejected(self):
+        for index, invalid in enumerate((None, {}, {'message': ''},
+                                         {'message': '   '}, {'message': 3}, 'Text')):
+            with self.subTest(metadata=invalid):
+                self.catalogs['zh_CN']['extensionDescription'] = invalid
+                self.write_catalog('zh_CN')
+                result = self.assert_rejected(self.root / f'bad-metadata-{index}')
+                self.assertIn('extensionDescription', result.stderr)
+
+    def test_manifest_metadata_requires_valid_localized_references(self):
+        for index, value in enumerate((None, '', 'Image Collector', '__MSG_extensionName')):
+            with self.subTest(value=value):
+                self.manifest['name'] = value
+                self.write_manifest()
+                result = self.assert_rejected(self.root / f'bad-reference-{index}')
+                self.assertIn('manifest.name', result.stderr)
+
+    def test_missing_locale_file_is_rejected(self):
+        (self.extension / '_locales' / 'zh_CN' / 'messages.json').unlink()
+        result = self.assert_rejected(self.root / 'missing-catalog')
+        self.assertIn('missing runtime files: _locales/zh_CN/messages.json', result.stderr)
+
+    def test_malformed_locale_catalog_is_rejected(self):
+        path = self.extension / '_locales' / 'en' / 'messages.json'
+        for index, content in enumerate(('{', '[]')):
+            with self.subTest(content=content):
+                path.write_text(content)
+                result = self.assert_rejected(self.root / f'bad-catalog-{index}')
+                self.assertIn('_locales/en/messages.json', result.stderr)
 
     def test_symlinked_runtime_file_is_rejected(self):
         outside = self.root / 'private.pem'

@@ -3,42 +3,52 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>解析页面 - Image Collector</title>
+    <title data-i18n="parsePageTitle">解析页面 - Image Collector</title>
     <link rel="stylesheet" href="./parse.css" />
   </head>
   <body>
     <div id="app">
       <header class="toolbar">
         <div class="brand">
-          <img src="../assets/logo.png" alt="Image Collector" class="logo" />
+          <img src="../assets/logo.png" alt="Image Collector" data-i18n-alt="extensionName" class="logo" />
           <div>
-            <h1>解析页面</h1>
+            <h1 data-i18n="parsePage">解析页面</h1>
             <p id="sourceUrl" class="source"></p>
           </div>
         </div>
 
         <form id="parseForm" class="parse-form">
+          <label for="parseUrlInput" data-i18n="pageUrl">网址</label>
           <input
             id="parseUrlInput"
             type="text"
             placeholder="输入或粘贴网址，例如 https://example.com"
+            data-i18n-placeholder="pageUrlPlaceholder"
             autocomplete="off"
           />
-          <button id="parseByUrl" type="submit">解析网址</button>
+          <button id="parseByUrl" type="submit" data-i18n="parseUrl">解析网址</button>
         </form>
 
         <div class="actions">
-          <button id="selectAll" type="button">全选</button>
-          <button id="unselectAll" type="button">全不选</button>
-          <button id="addSelected" type="button">添加已选</button>
-          <button id="reload" type="button">刷新候选</button>
-          <button id="openList" type="button">打开收集列表</button>
+          <button id="selectAll" type="button" data-i18n="selectAll">全选</button>
+          <button id="unselectAll" type="button" data-i18n="unselectAll">全不选</button>
+          <button id="addSelected" type="button" data-i18n="addSelected">添加已选</button>
+          <button id="reload" type="button" data-i18n="refreshCandidates">刷新候选</button>
+          <button id="openList" type="button" data-i18n="openCollectionList">打开收集列表</button>
           <span id="count" class="count">已勾选 0 项</span>
+          <label class="language-control" for="languageSelect">
+            <span data-i18n="language">语言</span>
+            <select id="languageSelect" data-language-select>
+              <option value="auto" data-i18n="languageAuto">跟随浏览器</option>
+              <option value="zh-CN" data-i18n="languageChinese">简体中文</option>
+              <option value="en" data-i18n="languageEnglish">English</option>
+            </select>
+          </label>
         </div>
       </header>
 
       <main>
-        <div id="empty" class="empty">暂无解析结果。请点击插件图标后选择“解析页面”。</div>
+        <div id="empty" class="empty" data-i18n="parseEmpty">暂无解析结果。请点击插件图标后选择“解析页面”。</div>
         <div id="grid" class="grid"></div>
       </main>
     </div>
@@ -47,12 +57,12 @@
       <div class="preview-panel" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
         <div class="preview-header">
           <h2 id="previewTitle" class="preview-title"></h2>
-          <button id="previewClose" type="button">关闭</button>
+          <button id="previewClose" type="button" data-i18n="close">关闭</button>
         </div>
         <div class="preview-wrap">
-          <button id="previewPrev" class="preview-nav prev" type="button" aria-label="上一张">‹</button>
-          <img id="previewImage" class="preview-image" alt="预览图片" />
-          <button id="previewNext" class="preview-nav next" type="button" aria-label="下一张">›</button>
+          <button id="previewPrev" class="preview-nav prev" type="button" aria-label="上一张" data-i18n-aria-label="previousImage">‹</button>
+          <img id="previewImage" class="preview-image" alt="预览图片" data-i18n-alt="previewImageAlt" />
+          <button id="previewNext" class="preview-nav next" type="button" aria-label="下一张" data-i18n-aria-label="nextImage">›</button>
         </div>
       </div>
     </div>

@@ -16,7 +16,7 @@
 body {
   margin: 0;
   background: radial-gradient(circle at top, #ffffff 0%, var(--bg) 55%);
-  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-family: system-ui, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   color: var(--text);
 }
 
@@ -100,6 +100,39 @@ body.modal-open {
 }
 
 .date-sort-control:focus-within {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.language-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #dce0e8;
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: #f4f5f8;
+  color: #4f5a72;
+  font-size: 13px;
+  max-width: 100%;
+}
+
+.language-control select {
+  appearance: none;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='m2 4 4 4 4-4' fill='none' stroke='%234f5a72' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 12px;
+  padding-right: 32px;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.language-control:focus-within {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
@@ -364,6 +397,7 @@ body.modal-open {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  flex-wrap: wrap;
   margin-bottom: 10px;
 }
 
@@ -390,6 +424,7 @@ body.modal-open {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .modal-action-btn {

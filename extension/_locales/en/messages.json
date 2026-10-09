@@ -1,0 +1,275 @@
+{
+  "extensionName": {
+    "message": "Image Collector"
+  },
+  "extensionDescription": {
+    "message": "Collect images from web pages with right-click, page parsing, batch downloads, and email sharing."
+  },
+  "collectImage": {
+    "message": "Collect Image"
+  },
+  "popupTitle": {
+    "message": "Image Collector"
+  },
+  "listPageTitle": {
+    "message": "Collection - Image Collector"
+  },
+  "parsePageTitle": {
+    "message": "Parse Page - Image Collector"
+  },
+  "chooseAction": {
+    "message": "Choose an action"
+  },
+  "collectionList": {
+    "message": "Collection"
+  },
+  "parsePage": {
+    "message": "Parse Page"
+  },
+  "parsePageHint": {
+    "message": "Parse the current tab to find larger images, then choose which ones to add."
+  },
+  "language": {
+    "message": "Language"
+  },
+  "languageAuto": {
+    "message": "Use browser language"
+  },
+  "languageChinese": {
+    "message": "Simplified Chinese"
+  },
+  "languageEnglish": {
+    "message": "English"
+  },
+  "pageUrl": {
+    "message": "Page URL"
+  },
+  "pageUrlPlaceholder": {
+    "message": "Enter or paste a URL, e.g. https://example.com"
+  },
+  "parseUrl": {
+    "message": "Parse URL"
+  },
+  "selectAll": {
+    "message": "Select All"
+  },
+  "unselectAll": {
+    "message": "Deselect All"
+  },
+  "addSelected": {
+    "message": "Add Selected"
+  },
+  "refreshCandidates": {
+    "message": "Refresh Candidates"
+  },
+  "openCollectionList": {
+    "message": "Open Collection"
+  },
+  "selectedCount": {
+    "message": "{count} selected"
+  },
+  "totalCount": {
+    "message": "(Total: {count})"
+  },
+  "groupImageCount": {
+    "message": "Images: {count}"
+  },
+  "parseEmpty": {
+    "message": "No parsed images yet. Click the extension icon and choose “Parse Page”."
+  },
+  "collectionEmpty": {
+    "message": "No collected images yet. Right-click an image on a web page and choose “Collect Image”."
+  },
+  "close": {
+    "message": "Close"
+  },
+  "previousImage": {
+    "message": "Previous image"
+  },
+  "nextImage": {
+    "message": "Next image"
+  },
+  "previewImageAlt": {
+    "message": "Image preview"
+  },
+  "imagePreviewTitle": {
+    "message": "Image preview ({index}/{count})"
+  },
+  "selectImage": {
+    "message": "Select"
+  },
+  "unknown": {
+    "message": "Unknown"
+  },
+  "imageMetrics": {
+    "message": "Resolution {width}x{height} | Size {size}"
+  },
+  "unknownSource": {
+    "message": "Source: unknown page"
+  },
+  "currentTabMissing": {
+    "message": "The current tab could not be found."
+  },
+  "parseFailed": {
+    "message": "Parsing failed: {error}"
+  },
+  "noPreviousImage": {
+    "message": "There is no previous image."
+  },
+  "noNextImage": {
+    "message": "There is no next image."
+  },
+  "selectImageFirst": {
+    "message": "Select at least one image first."
+  },
+  "addCompleted": {
+    "message": "Done: {added} added, {skipped} skipped."
+  },
+  "pageLoadTimeout": {
+    "message": "The page took too long to load. Try again later."
+  },
+  "enterUrlFirst": {
+    "message": "Enter a URL first."
+  },
+  "invalidUrl": {
+    "message": "The URL is invalid. Check it and try again."
+  },
+  "httpPagesOnly": {
+    "message": "Only HTTP and HTTPS pages can be parsed."
+  },
+  "refresh": {
+    "message": "Refresh"
+  },
+  "dateGrouping": {
+    "message": "Date grouping"
+  },
+  "dateGroupingHint": {
+    "message": "Group by date added, newest first"
+  },
+  "groupByDay": {
+    "message": "By day"
+  },
+  "groupByWeek": {
+    "message": "By week"
+  },
+  "groupByMonth": {
+    "message": "By month"
+  },
+  "download": {
+    "message": "Download"
+  },
+  "batchDelete": {
+    "message": "Delete Selected"
+  },
+  "sendMail": {
+    "message": "Send Email"
+  },
+  "clearAll": {
+    "message": "Clear All"
+  },
+  "moreActions": {
+    "message": "More Options"
+  },
+  "usageGuide": {
+    "message": "Usage Guide"
+  },
+  "delete": {
+    "message": "Delete"
+  },
+  "downloadDirectory": {
+    "message": "Download directory"
+  },
+  "downloadDirectoryPlaceholder": {
+    "message": "Leave blank for the default download folder"
+  },
+  "urlParameters": {
+    "message": "URL parameters"
+  },
+  "exportJson": {
+    "message": "Export JSON"
+  },
+  "importJson": {
+    "message": "Import JSON"
+  },
+  "importJsonHint": {
+    "message": "Import JSON exported by this extension, or a JSON array of images."
+  },
+  "downloadGuideTitle": {
+    "message": "Download setup guide"
+  },
+  "guideIntro": {
+    "message": "Follow these four steps for smoother batch downloads:"
+  },
+  "guideOpenDownloads": {
+    "message": "Open this address in your browser:"
+  },
+  "guideSentenceEnd": {
+    "message": "."
+  },
+  "guideDisablePrompt": {
+    "message": "Turn off “Ask where to save each file before downloading”."
+  },
+  "guideDownloadFolderBefore": {
+    "message": "Return to the extension, open “More Options”, and enter a subfolder under “Download directory” (for example,"
+  },
+  "guideDownloadFolderAfter": {
+    "message": "); leave it blank to use the default download folder."
+  },
+  "guideOpenExtensions": {
+    "message": "Open"
+  },
+  "guideReloadExtension": {
+    "message": ", click “Reload” for this extension, then try downloading again."
+  },
+  "noPreviousWallpaper": {
+    "message": "There is no previous wallpaper."
+  },
+  "noNextWallpaper": {
+    "message": "There is no next wallpaper."
+  },
+  "wallpaperDownloadSucceeded": {
+    "message": "The current wallpaper was downloaded."
+  },
+  "wallpaperDownloadFailed": {
+    "message": "The current wallpaper could not be downloaded. Try again later."
+  },
+  "deleteCurrentWallpaperConfirm": {
+    "message": "Delete the current wallpaper?"
+  },
+  "noMoreWallpapers": {
+    "message": "There are no more wallpapers."
+  },
+  "switchedToPreviousWallpaper": {
+    "message": "There is no next wallpaper. Switched to the previous one."
+  },
+  "importNoChanges": {
+    "message": "Import complete. No new data was found."
+  },
+  "importCompleted": {
+    "message": "Import complete. Images added: {count}."
+  },
+  "importCompletedWithSettings": {
+    "message": "Import complete. Images added: {count}. Settings updated."
+  },
+  "importFailed": {
+    "message": "Import failed: {error}"
+  },
+  "downloadCompleted": {
+    "message": "Downloads complete: {succeeded} succeeded, {failed} failed."
+  },
+  "mailSubject": {
+    "message": "Image list"
+  },
+  "selectImageBeforeMail": {
+    "message": "Select at least one image before sending an email."
+  },
+  "mailTooLong": {
+    "message": "The email may be too long because many images are selected. Consider sending them in smaller groups."
+  },
+  "clearAllConfirm": {
+    "message": "Clear all collected images?"
+  },
+  "batchDeleteConfirm": {
+    "message": "Delete the selected images ({count})?"
+  }
+}

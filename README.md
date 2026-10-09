@@ -1,5 +1,7 @@
 # Image Collector
 
+简体中文 | [English](README.en.md)
+
 [下载最新版](https://github.com/fangxiaoxingit/image-collection-chrome/releases/latest/download/image-collector.zip) · [版本记录](https://github.com/fangxiaoxingit/image-collection-chrome/releases) · [发布指南](docs/RELEASING.md)
 
 一个用于收集、预览和批量下载网页图片的 Chrome 扩展。支持右键收集单张图片，也可以解析页面后挑选需要的图片。
@@ -12,6 +14,7 @@
 - **日期分组**：按添加日期从新到旧排列，支持按日、周、月查看。
 - **批量下载**：按年月目录保存，支持自定义子目录和下载 URL 参数。
 - **数据备份**：JSON 导入 / 导出，按完整 URL 自动去重。
+- **界面语言**：支持简体中文与 English，可自动跟随浏览器或手动选择。
 
 ## 安装
 
@@ -26,6 +29,14 @@
 更新时解压新版本，重新加载扩展并刷新已打开的插件页面。当前通过 GitHub 分发。
 
 ## 使用
+
+### 界面语言
+
+插件弹窗、收集列表和解析页均提供语言选择器，可选“跟随浏览器”“简体中文”或“English”。默认使用自动模式：按浏览器首选语言列表的顺序，选择第一个匹配的语言；`zh` / `zh-*` 使用简体中文，`en` / `en-*` 使用 English，没有匹配项时使用 English。浏览器未提供首选语言列表时，使用浏览器界面语言判断。
+
+目前中文词条均为**简体中文**，繁体中文浏览器语言也会显示简体中文。手动选择保存在当前浏览器的本地扩展存储中，会同步更新已打开的插件页面和“收集图片”右键菜单。切回自动模式后，会在重新打开页面或浏览器语言发生变化时重新判断。
+
+语言切换会更新界面文案、提示正文和日期显示格式；日期仍使用本地时区，每周仍从周一开始。浏览器原生提醒 / 确认框的按钮、Chrome 或系统返回的错误详情使用浏览器自身语言。扩展名称、描述和工具栏悬浮标题由 Chrome 按浏览器界面语言及扩展词条的回退规则选择，不受插件内手动语言设置影响；回退规则参见 [Chrome 国际化说明](https://developer.chrome.com/docs/extensions/reference/api/i18n#search-for-messages)。
 
 ### 收集图片
 
@@ -95,6 +106,9 @@ JSON 导出包含完整图片 URL 和下载配置，可通过“更多功能”�
 extension/
 ├── manifest.json       # 扩展配置与权限
 ├── background.js       # 右键菜单与单张采集
+├── _locales/
+│   ├── en/messages.json    # 英文词条
+│   └── zh_CN/messages.json # 简体中文词条
 ├── assets/             # 图标
 ├── pages/
 │   ├── popup.*         # 插件入口菜单
@@ -105,7 +119,7 @@ extension/
 
 修改代码后，在 `chrome://extensions/` 点击扩展的“重新加载”，并刷新已打开的插件页面。页面交互可通过开发者工具调试；后台日志可在扩展详情的 Service Worker 调试入口查看。
 
-提交改动前，建议验证右键去重、页面解析、候选添加、下载、删除及 JSON 导入 / 导出。
+提交改动前，建议验证右键去重、页面解析、候选添加、下载、删除及 JSON 导入 / 导出，并检查两种语言、自动选择、跨页面同步和语言设置保存。
 
 ## 自动发布
 
