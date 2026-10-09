@@ -1,132 +1,132 @@
 # Image Collector
 
-简体中文 | [English](README.en.md)
+English | [简体中文](README.zh-CN.md)
 
-[下载最新版](https://github.com/fangxiaoxingit/image-collection-chrome/releases/latest/download/image-collector.zip) · [版本记录](https://github.com/fangxiaoxingit/image-collection-chrome/releases) · [发布指南](docs/RELEASING.md)
+[Download the latest version](https://github.com/fangxiaoxingit/image-collection-chrome/releases/latest/download/image-collector.zip) · [Release history](https://github.com/fangxiaoxingit/image-collection-chrome/releases) · [Release guide](docs/RELEASING.md)
 
-一个用于收集、预览和批量下载网页图片的 Chrome 扩展。支持右键收集单张图片，也可以解析页面后挑选需要的图片。
+A Chrome extension for collecting, previewing, and downloading web images in batches. Collect a single image from the context menu, or parse a page and choose the images you want.
 
-## 功能
+## Features
 
-- **图片采集**：右键收集、解析当前标签页、输入网址解析。
-- **候选筛选**：查看图片分辨率和文件大小，勾选后添加到收集列表。
-- **图片管理**：大图预览、上一张 / 下一张切换、全选、单项或批量删除。
-- **日期分组**：按添加日期从新到旧排列，支持按日、周、月查看。
-- **批量下载**：按年月目录保存，支持自定义子目录和下载 URL 参数。
-- **数据备份**：JSON 导入 / 导出，按完整 URL 自动去重。
-- **界面语言**：支持简体中文与 English，可自动跟随浏览器或手动选择。
+- **Image collection**: Collect from the context menu, parse the current tab, or enter a URL to parse.
+- **Candidate selection**: View image dimensions and file sizes, then select images to add to your collection.
+- **Image management**: Preview full-size images, move to the previous or next image, select all, and delete individual images or multiple images at once.
+- **Date grouping**: Browse images by day, week, or month, with the most recently added images first.
+- **Batch downloads**: Save images in year-month folders, with a customizable subfolder and download URL parameters.
+- **Data backup**: Import and export JSON, with automatic deduplication by the complete URL.
+- **Interface languages**: Use English or Simplified Chinese, automatically selected from browser preferences or chosen manually.
 
-## 安装
+## Installation
 
-1. 从 [最新 Release](https://github.com/fangxiaoxingit/image-collection-chrome/releases/latest) 下载 `image-collector.zip` 并解压。
-2. 在 Chrome 地址栏打开 `chrome://extensions/`。
-3. 开启右上角的“开发者模式”，点击“加载已解压的扩展程序”。
-4. 选择解压后包含 `manifest.json` 的目录；若通过源码安装，则选择仓库下的 `extension` 目录。
-5. 在浏览器扩展菜单中将 **Image Collector** 固定到工具栏，方便使用。
+1. Download `image-collector.zip` from the [latest release](https://github.com/fangxiaoxingit/image-collection-chrome/releases/latest) and extract it.
+2. Open `chrome://extensions/` in Chrome's address bar.
+3. Enable **Developer mode** in the upper-right corner, then click **Load unpacked**.
+4. Select the extracted folder containing `manifest.json`. If installing from source, select the repository's `extension` folder.
+5. Pin **Image Collector** to the toolbar from Chrome's extensions menu for easy access.
 
-无需安装依赖或运行构建命令。加载步骤也可参考 [Chrome 官方说明](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world)。
+No dependencies or build commands are required. You can also refer to [Chrome's official loading instructions](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world).
 
-更新时解压新版本，重新加载扩展并刷新已打开的插件页面。当前通过 GitHub 分发。
+To update, extract the new version, reload the extension, and refresh any open extension pages. The extension is currently distributed through GitHub.
 
-## 使用
+## Usage
 
-### 界面语言
+### Interface language
 
-插件弹窗、收集列表和解析页均提供语言选择器，可选“跟随浏览器”“简体中文”或“English”。默认使用自动模式：按浏览器首选语言列表的顺序，选择第一个匹配的语言；`zh` / `zh-*` 使用简体中文，`en` / `en-*` 使用 English，没有匹配项时使用 English。浏览器未提供首选语言列表时，使用浏览器界面语言判断。
+The popup, collection list, and parsing page each have a language selector with **Use browser language**, **Simplified Chinese**, and **English**. Automatic mode is the default: it checks your browser's preferred languages in order and uses the first supported match. `zh` / `zh-*` selects Simplified Chinese, and `en` / `en-*` selects English. If none match, it uses English. If the browser does not provide a preferred-language list, it checks the browser's interface language instead.
 
-目前中文词条均为**简体中文**，繁体中文浏览器语言也会显示简体中文。手动选择保存在当前浏览器的本地扩展存储中，会同步更新已打开的插件页面和“收集图片”右键菜单。切回自动模式后，会在重新打开页面或浏览器语言发生变化时重新判断。
+The Chinese translation is **Simplified Chinese**; Traditional Chinese browser preferences also select this translation. A manual choice is saved in the current browser's local extension storage and updates open extension pages and the **Collect Image** context menu. Automatic mode checks again when a page is reopened or the browser languages change.
 
-语言切换会更新界面文案、提示正文和日期显示格式；日期仍使用本地时区，每周仍从周一开始。浏览器原生提醒 / 确认框的按钮、Chrome 或系统返回的错误详情使用浏览器自身语言。扩展名称、描述和工具栏悬浮标题由 Chrome 按浏览器界面语言及扩展词条的回退规则选择，不受插件内手动语言设置影响；回退规则参见 [Chrome 国际化说明](https://developer.chrome.com/docs/extensions/reference/api/i18n#search-for-messages)。
+Switching languages updates interface text, the body of prompts, and date formatting. Dates still use the local time zone, and weeks still begin on Monday. Buttons in native alert / confirmation dialogs and error details returned by Chrome or the system use the browser's own language. Chrome selects the extension name, description, and toolbar hover title from its interface language and the extension's catalog fallback rules; a manual language choice inside the extension does not change this metadata. See [Chrome's internationalization documentation](https://developer.chrome.com/docs/extensions/reference/api/i18n#search-for-messages) for its fallback rules.
 
-### 收集图片
+### Collect images
 
-- **单张收集**：在网页图片上右键，选择“收集图片”。
-- **当前页面**：点击插件图标 → “解析页面”，在候选页勾选图片并点击“添加已选”。
-- **指定网址**：在解析页输入网址，点击“解析网址”，再勾选并添加图片。解析时会临时打开后台标签页，完成后关闭。
+- **Single image**: Right-click an image on a web page and choose **Collect Image (收集图片)**.
+- **Current page**: Click the extension icon → **Parse Page (解析页面)**. Select images on the candidate page, then click **Add Selected (添加已选)**.
+- **Specific URL**: Enter a URL on the parsing page and click **Parse URL (解析网址)**, then select and add images. Parsing temporarily opens a background tab and closes it when finished.
 
-### 管理与下载
+### Manage and download
 
-点击插件图标 → “收集列表”。勾选图片后可批量下载或删除，点击图片可打开大图预览。预览支持左右方向键切换、`Esc` 关闭。
+Click the extension icon → **Collection (收集列表)**. Select images to download or delete them in batches, or click an image to open a full-size preview. Use the left and right arrow keys to switch images, and press `Esc` to close the preview.
 
-顶部“日期排序”默认按日分组，可切换为按周或按月，并记住上次选择。日期按浏览器本地时区计算，每周从周一开始；分组及组内图片均为最新添加在前。
+**Date grouping (日期排序)** at the top groups images by day by default. You can switch to weekly or monthly grouping, and the extension remembers your last selection. Dates use your browser's local time zone, and weeks begin on Monday. Both groups and images within each group are ordered with the most recently added first.
 
-“发送邮件”会打开默认邮件客户端，将选中图片的 URL 填入正文，实际发送由你完成。“刷新”用于重新读取本地列表与配置。
+**Send Email (发送邮件)** opens your default email client with the selected image URLs in the message body; you send the email yourself. **Refresh (刷新)** reloads the locally stored list and settings.
 
-### 下载设置
+### Download settings
 
-在收集列表点击“更多功能”：
+Click **More Options (更多功能)** in the collection list:
 
-| 设置 | 说明 |
+| Setting | Description |
 | --- | --- |
-| 下载目录 | 填写相对于浏览器默认下载目录的子目录，例如 `image-collector`；留空则直接在默认下载目录下按年月保存。 |
-| URL 参数 | 默认值为 `format=jpg&name=large`。填写后会整体替换下载链接原有的查询参数；留空则保留原链接。 |
+| Download Directory (下载目录) | Enter a subfolder relative to Chrome's default download directory, such as `image-collector`. Leave it blank to save images in year-month folders directly under the default download directory. |
+| URL Parameters (URL 参数) | The default is `format=jpg&name=large`. If filled in, this setting replaces the download URL's entire existing query string. Leave it blank to preserve the original URL. |
 
-保存路径示例：
+Example save path:
 
 ```text
-默认下载目录/
-└── image-collector/       # 自定义子目录，可留空
+Default download directory/
+└── image-collector/       # Optional custom subfolder
     └── YYYY-MM/
-        └── 图片文件
+        └── Image file
 ```
 
-**使用普通图片链接或带签名参数的链接时，建议将“URL 参数”留空，避免替换原参数导致下载失败。** 该设置只影响下载，不修改收集列表中的原始 URL。
+**For ordinary image URLs or URLs with signed parameters, we recommend leaving URL Parameters (URL 参数) blank to avoid download failures caused by replacing the original parameters.** This setting only affects downloads; it does not change the original URLs in your collection.
 
-批量下载将图片分别保存为独立文件，不生成 ZIP。页面提示统计的是下载任务启动结果，最终完成情况以 Chrome 下载记录为准。若出现保存位置提示，可在 `chrome://settings/downloads` 中调整相关设置。下载路径范围参见 [Chrome 下载 API 说明](https://developer.chrome.com/docs/extensions/reference/api/downloads#type-DownloadOptions)。
+Batch downloads save images as separate files and do not create a ZIP archive. The page reports how many download tasks were successfully started; check Chrome's download history for their final completion status. If Chrome prompts you to choose a save location, you can adjust the relevant settings at `chrome://settings/downloads`. See the [Chrome downloads API documentation](https://developer.chrome.com/docs/extensions/reference/api/downloads#type-DownloadOptions) for download path restrictions.
 
-## 数据与权限
+## Data and permissions
 
-采集记录、解析候选和配置保存在当前浏览器的本地扩展存储中，不上传至项目服务器。预览、文件大小检测和下载会请求图片原站；解析指定网址会访问对应页面。
+Collection records, parsing candidates, and settings are saved in the current browser's local extension storage and are not uploaded to a project server. Previews, file size checks, and downloads make requests to the original image hosts. Parsing a specific URL visits the corresponding page.
 
-JSON 导出包含完整图片 URL 和下载配置，可通过“更多功能”导入恢复。分享导出文件前，请检查 URL 中是否含私人访问参数。
+JSON exports include complete image URLs and download settings. You can restore them by importing the file through **More Options (更多功能)**. Before sharing an export, check whether any URLs contain private access parameters.
 
-| 权限 | 用途 |
+| Permission | Purpose |
 | --- | --- |
-| `contextMenus` | 提供“收集图片”右键菜单。 |
-| `storage` | 保存采集记录、候选结果与配置。 |
-| `downloads` | 发起图片下载。 |
-| `tabs` | 获取页面信息、打开列表页及临时解析标签页。 |
-| `scripting` | 在目标页面执行图片提取脚本。 |
-| `activeTab` | 点击插件时，临时获得当前标签页的访问权限。 |
-| `<all_urls>` | 允许解析不同网站，并向图片原站请求文件大小。 |
+| `contextMenus` | Provides the Collect Image (收集图片) context menu item. |
+| `storage` | Saves collection records, parsing candidates, and settings. |
+| `downloads` | Starts image downloads. |
+| `tabs` | Retrieves page information and opens the collection page and temporary parsing tabs. |
+| `scripting` | Runs the image extraction script on the target page. |
+| `activeTab` | Temporarily grants access to the current tab when you click the extension. |
+| `<all_urls>` | Allows parsing across different websites and requesting file sizes from the original image hosts. |
 
-## 已知限制
+## Known limitations
 
-- 页面解析只提取当时已有的 HTTP(S) `<img>`，宽高均需至少 120px。不提取 CSS 背景、Canvas 或 `data:` / `blob:` 图片，也不会自动滚动加载更多内容；可先滚动页面，再使用“解析页面”。
-- “刷新候选”只重新读取上一次解析结果；页面内容变化后，需要重新解析。
-- 右键采集不验证目标是否为图片，在非图片位置使用时可能保存网页、链接或媒体地址。
-- 去重依据完整 URL，不比较图片内容；同一图片的不同 URL 仍可能分别保存。
-- 文件大小无法获取时显示“未知”；链接过期或原站访问限制可能导致预览或下载失败。
+- Page parsing only extracts HTTP(S) `<img>` elements present at the time of parsing, with both width and height at least 120px. It does not extract CSS backgrounds, Canvas content, or `data:` / `blob:` images, and it does not automatically scroll to load more content. You can scroll the page first, then use **Parse Page (解析页面)**.
+- **Refresh Candidates (刷新候选)** only reloads the most recent parsing results. If the page content changes, parse it again.
+- Context menu collection does not verify that the target is an image. Using it on a non-image area may save a page, link, or media URL.
+- Deduplication compares complete URLs, not image content. Different URLs for the same image may still be saved separately.
+- File sizes appear as **Unknown (未知)** when they cannot be retrieved. Expired URLs or access restrictions on the original host may prevent previews or downloads.
 
-## 开发
+## Development
 
-使用原生 JavaScript、HTML / CSS 和 Manifest V3，无框架或构建步骤。
+Built with vanilla JavaScript, HTML / CSS, and Manifest V3, with no framework or build step.
 
 ```text
 extension/
-├── manifest.json       # 扩展配置与权限
-├── background.js       # 右键菜单与单张采集
+├── manifest.json       # Extension configuration and permissions
+├── background.js       # Context menu and single-image collection
 ├── _locales/
-│   ├── en/messages.json    # 英文词条
-│   └── zh_CN/messages.json # 简体中文词条
-├── assets/             # 图标
+│   ├── en/messages.json    # English strings
+│   └── zh_CN/messages.json # Simplified Chinese strings
+├── assets/             # Icons
 ├── pages/
-│   ├── popup.*         # 插件入口菜单
-│   ├── list.*          # 收集列表、预览与配置
-│   └── parse.*         # 页面解析与候选筛选
-└── utils/              # 本地存储、下载及辅助工具
+│   ├── popup.*         # Extension entry menu
+│   ├── list.*          # Collection list, previews, and settings
+│   └── parse.*         # Page parsing and candidate selection
+└── utils/              # Local storage, downloads, and helper utilities
 ```
 
-修改代码后，在 `chrome://extensions/` 点击扩展的“重新加载”，并刷新已打开的插件页面。页面交互可通过开发者工具调试；后台日志可在扩展详情的 Service Worker 调试入口查看。
+After editing the code, click **Reload** for the extension at `chrome://extensions/` and refresh any open extension pages. Use DevTools to debug page interactions; inspect background logs through the Service Worker debugging link in the extension's details.
 
-提交改动前，建议验证右键去重、页面解析、候选添加、下载、删除及 JSON 导入 / 导出，并检查两种语言、自动选择、跨页面同步和语言设置保存。
+Before submitting changes, we recommend checking context menu deduplication, page parsing, adding candidates, downloads, deletion, and JSON import / export, along with both interface languages, automatic selection, synchronization across pages, and saved language choices.
 
-## 自动发布
+## Automated releases
 
-推送 `main` 或提交 PR 时，GitHub Actions 自动校验并生成安装包。推送与 `manifest.json` 版本匹配的 `v*` 标签后，自动发布 Release，上传固定名 ZIP、版本名 ZIP 和 SHA-256 校验文件。
+When you push to `main` or submit a pull request, GitHub Actions automatically validates the project and generates installation packages. Pushing a `v*` tag that matches the version in `manifest.json` automatically publishes a release with a ZIP using a fixed filename, a versioned ZIP, and a SHA-256 checksum file.
 
-本地打包运行 `python3 scripts/package.py`，产物位于 `dist/`。完整步骤和手动发布方式见 [发布指南](docs/RELEASING.md)。
+To package locally, run `python3 scripts/package.py`. Output files are placed in `dist/`. See the [release guide](docs/RELEASING.md) for the full process and manual release options.
 
-## 许可
+## License
 
-本项目使用 [MIT License](LICENSE)。
+This project is licensed under the [MIT License](LICENSE).
