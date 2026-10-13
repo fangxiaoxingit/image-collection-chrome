@@ -50,6 +50,8 @@ Click the extension icon → **Collection (收集列表)**. Select images to dow
 
 **Date grouping (日期排序)** at the top groups images by day by default. You can switch to weekly or monthly grouping, and the extension remembers your last selection. Dates use your browser's local time zone, and weeks begin on Monday. Both groups and images within each group are ordered with the most recently added first.
 
+Each group header has **Select All** and **Deselect All** buttons on the right. These buttons only change the selection within that group, so you can quickly prepare specific days, weeks, or months for batch actions.
+
 **Send Email (发送邮件)** opens your default email client with the selected image URLs in the message body; you send the email yourself. **Refresh (刷新)** reloads the locally stored list and settings.
 
 ### Download settings

@@ -56,6 +56,12 @@
   "unselectAll": {
     "message": "全不选"
   },
+  "deselectGroupAll": {
+    "message": "全部不选"
+  },
+  "selectionUpdateFailed": {
+    "message": "更新勾选状态失败：{error}"
+  },
   "addSelected": {
     "message": "添加已选"
   },

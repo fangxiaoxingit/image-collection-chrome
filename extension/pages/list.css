@@ -149,21 +149,63 @@ body.modal-open {
 
 .date-group-header {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 0 0 10px;
+}
+
+.date-group-heading {
+  display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 0 0 10px;
+  gap: 4px 8px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .date-group-title {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .date-group-count {
   color: var(--muted);
   font-size: 12px;
+  white-space: nowrap;
+}
+
+.date-group-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.date-group-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.date-group-button:hover {
+  border-color: #aeb9cb;
+}
+
+.date-group-button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .tool-btn {

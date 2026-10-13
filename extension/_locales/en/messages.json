@@ -56,6 +56,12 @@
   "unselectAll": {
     "message": "Deselect All"
   },
+  "deselectGroupAll": {
+    "message": "Deselect All"
+  },
+  "selectionUpdateFailed": {
+    "message": "Could not update selection: {error}"
+  },
   "addSelected": {
     "message": "Add Selected"
   },

@@ -158,6 +158,22 @@ export async function setSelectedById(id, selected) {
   return nextList
 }
 
+export async function setSelectedByIds(ids, selected) {
+  const idSet = new Set(ids)
+  const list = await getList()
+  const nextList = list.map((item) => {
+    if (!idSet.has(item.id)) return item
+
+    return {
+      ...item,
+      selected: Boolean(selected)
+    }
+  })
+
+  await setList(nextList)
+  return nextList
+}
+
 function normalizeQueryParam(value) {
   if (typeof value !== 'string') return DEFAULT_DOWNLOAD_QUERY_PARAM
   return value.trim().replace(/^\?+/, '')

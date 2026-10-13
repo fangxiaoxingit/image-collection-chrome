@@ -11,7 +11,8 @@ import {
   setDateGroupPeriod,
   setAllSelected,
   setList,
-  setSelectedById
+  setSelectedById,
+  setSelectedByIds
 } from '../utils/storage.js'
 import { batchDownload } from '../utils/download.js'
 import { groupImagesByDate } from '../utils/date-groups.js'
@@ -26,6 +27,8 @@ const state = {
   previewIndex: -1,
   modalMode: null
 }
+
+let selectionUpdates = Promise.resolve()
 
 const elements = {
   list: document.getElementById('list'),
@@ -72,6 +75,31 @@ function getSelectedItems() {
 function updateSelectedCount() {
   const selectedCount = getSelectedItems().length
   elements.count.textContent = t('selectedCount', { count: selectedCount })
+}
+
+function syncSelectionState() {
+  const itemsById = new Map(state.list.map((item) => [item.id, item]))
+  state.viewList = state.viewList.map((item) => itemsById.get(item.id) || item)
+  for (const card of elements.list.querySelectorAll('.card')) {
+    card.querySelector('input[type="checkbox"]').checked = Boolean(itemsById.get(card.dataset.id)?.selected)
+  }
+  updateSelectedCount()
+}
+
+function updateSelection(update) {
+  selectionUpdates = selectionUpdates.then(async () => {
+    const nextList = await update()
+    const contentChanged = nextList.length !== state.list.length || nextList.some((item, index) => (
+      ['id', 'url', 'preview', 'createdAt'].some((key) => item[key] !== state.list[index][key])
+    ))
+    state.list = nextList
+    if (contentChanged) renderList()
+    else syncSelectionState()
+  }).catch((error) => {
+    syncSelectionState()
+    alert(t('selectionUpdateFailed', { error: error.message || String(error) }))
+  })
+  return selectionUpdates
 }
 
 function updateTotalCount() {
@@ -259,6 +287,7 @@ function handleGlobalKeydown(event) {
 function createCard(item, index) {
   const card = document.createElement('article')
   card.className = 'card'
+  card.dataset.id = item.id
 
   const previewWrap = document.createElement('div')
   previewWrap.className = 'preview-wrap'
@@ -307,8 +336,8 @@ function createCard(item, index) {
   checkbox.type = 'checkbox'
   checkbox.checked = item.selected
   checkbox.addEventListener('change', async () => {
-    state.list = await setSelectedById(item.id, checkbox.checked)
-    updateSelectedCount()
+    const selected = checkbox.checked
+    await updateSelection(() => setSelectedById(item.id, selected))
   })
   checkboxLabel.prepend(checkbox)
   rowMain.appendChild(checkboxLabel)
@@ -341,19 +370,41 @@ function renderList() {
   let cardIndex = 0
   const fragment = document.createDocumentFragment()
 
-  for (const group of groups) {
+  for (const [groupIndex, group] of groups.entries()) {
     const section = document.createElement('section')
     section.className = 'date-group'
     section.dataset.groupKey = group.key
     const header = document.createElement('div')
     header.className = 'date-group-header'
+    const heading = document.createElement('div')
+    heading.className = 'date-group-heading'
     const title = document.createElement('h2')
     title.className = 'date-group-title'
+    title.id = `date-group-title-${groupIndex}`
     title.textContent = group.label
     const count = document.createElement('span')
     count.className = 'date-group-count'
     count.textContent = t('groupImageCount', { count: group.items.length })
-    header.append(title, count)
+    heading.append(title, count)
+    const actions = document.createElement('div')
+    actions.className = 'date-group-actions'
+    actions.setAttribute('role', 'group')
+    actions.setAttribute('aria-labelledby', title.id)
+    const ids = group.items.map((item) => item.id)
+    for (const [selected, key, color] of [[true, 'selectAll', 'btn-teal'], [false, 'deselectGroupAll', 'btn-ash']]) {
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.className = `date-group-button ${color}`
+      const label = document.createElement('span')
+      label.id = `date-group-action-${groupIndex}-${selected}`
+      label.dataset.i18n = key
+      label.textContent = t(key)
+      button.appendChild(label)
+      button.setAttribute('aria-labelledby', `${label.id} ${title.id}`)
+      button.addEventListener('click', () => updateSelection(() => setSelectedByIds(ids, selected)))
+      actions.appendChild(button)
+    }
+    header.append(heading, actions)
     const grid = document.createElement('div')
     grid.className = 'grid'
     for (const item of group.items) {
@@ -388,8 +439,7 @@ async function loadSettings() {
 }
 
 async function handleSelectAll(selected) {
-  state.list = await setAllSelected(selected)
-  renderList()
+  await updateSelection(() => setAllSelected(selected))
 }
 
 function normalizeQueryParamValue(value) {
