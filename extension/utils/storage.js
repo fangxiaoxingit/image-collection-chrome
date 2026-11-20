@@ -1,9 +1,35 @@
 const KEY = 'image_list'
-const DOWNLOAD_QUERY_KEY = 'download_query_param'
+export const DOWNLOAD_QUERY_KEY = 'download_query_param'
 const DEFAULT_DOWNLOAD_QUERY_PARAM = 'format=jpg&name=large'
-const DOWNLOAD_BASE_DIR_KEY = 'download_base_dir'
+export const DOWNLOAD_BASE_DIR_KEY = 'download_base_dir'
 const PARSE_CANDIDATES_KEY = 'parse_candidates_cache'
 const DATE_GROUP_PERIOD_KEY = 'date_group_period'
+const MENU_OPTIONS_KEY = 'context_menu_options'
+
+export const MENU_OPTION_KEYS = ['collectImage', 'parsePage']
+
+function normalizeMenuOptions(value) {
+  const raw = value && typeof value === 'object' ? value : {}
+  return {
+    collectImage: raw.collectImage !== false,
+    parsePage: raw.parsePage !== false
+  }
+}
+
+export async function getMenuOptions() {
+  const res = await chrome.storage.local.get(MENU_OPTIONS_KEY)
+  return normalizeMenuOptions(res[MENU_OPTIONS_KEY])
+}
+
+export async function setMenuOption(key, enabled) {
+  if (!MENU_OPTION_KEYS.includes(key)) {
+    throw new Error(`Unknown menu option: ${key}`)
+  }
+  const options = await getMenuOptions()
+  options[key] = Boolean(enabled)
+  await chrome.storage.local.set({ [MENU_OPTIONS_KEY]: options })
+  return options
+}
 
 function normalizeDateGroupPeriod(value) {
   return ['day', 'week', 'month'].includes(value) ? value : 'day'

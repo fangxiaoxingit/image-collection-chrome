@@ -1,8 +1,10 @@
-import { addImageIfNotExists } from './utils/storage.js'
+import { parseTabImages } from './utils/page-images.js'
+import { addImageIfNotExists, getMenuOptions, setParseCandidates } from './utils/storage.js'
 import { LANGUAGE_KEY, initI18n, refreshI18n, t } from './utils/i18n.js'
 
-const MENU_ID = 'image_collector_save_image'
-const MENU_CONTEXTS = [
+const SAVE_MENU_ID = 'image_collector_save_image'
+const PARSE_MENU_ID = 'image_collector_parse_page'
+const SAVE_MENU_CONTEXTS = [
   'image',
   'all',
   'page',
@@ -12,6 +14,16 @@ const MENU_CONTEXTS = [
   'audio',
   'selection'
 ]
+const PARSE_MENU_CONTEXTS = ['page', 'frame', 'selection']
+
+const MENU_TITLES = [
+  [SAVE_MENU_ID, 'collectImage'],
+  [PARSE_MENU_ID, 'parsePage']
+]
+
+const activeMenuIds = new Set()
+let contextMenuInitializing = false
+let menuLanguageRefreshPending = false
 
 function findUrlInText(text) {
   if (typeof text !== 'string') return ''
@@ -37,9 +49,6 @@ function pickTargetUrl(info, tab) {
   return findUrlInText(info.selectionText)
 }
 
-let contextMenuInitializing = false
-let menuLanguageRefreshPending = false
-
 function runContextMenuOperation(operation) {
   return new Promise((resolve, reject) => {
     operation(() => {
@@ -53,22 +62,38 @@ function runContextMenuOperation(operation) {
   })
 }
 
-async function createContextMenu() {
-  // Installation and startup can overlap; keep the lock until creation completes.
-  if (contextMenuInitializing) return
+async function createMenuItem(id, title, contexts) {
+  await runContextMenuOperation((callback) => chrome.contextMenus.create({
+    id,
+    title,
+    contexts
+  }, callback))
+  activeMenuIds.add(id)
+}
+
+async function rebuildContextMenu() {
+  // Installation, startup and option changes can overlap; keep one creation at a time.
+  if (contextMenuInitializing) {
+    menuLanguageRefreshPending = true
+    return
+  }
   contextMenuInitializing = true
 
   try {
     await initI18n()
     await refreshI18n()
+    const options = await getMenuOptions()
     await runContextMenuOperation((callback) => chrome.contextMenus.removeAll(callback))
-    await runContextMenuOperation((callback) => chrome.contextMenus.create({
-      id: MENU_ID,
-      title: t('collectImage'),
-      contexts: MENU_CONTEXTS
-    }, callback))
+    activeMenuIds.clear()
+
+    if (options.collectImage) {
+      await createMenuItem(SAVE_MENU_ID, t('collectImage'), SAVE_MENU_CONTEXTS)
+    }
+    if (options.parsePage) {
+      await createMenuItem(PARSE_MENU_ID, t('parsePage'), PARSE_MENU_CONTEXTS)
+    }
   } catch (error) {
-    console.error('Unable to initialize image collection menu:', error)
+    console.error('Unable to initialize context menus:', error)
   } finally {
     contextMenuInitializing = false
     if (menuLanguageRefreshPending) {
@@ -79,23 +104,32 @@ async function createContextMenu() {
 }
 
 async function refreshContextMenuLanguage() {
+  if (contextMenuInitializing) {
+    menuLanguageRefreshPending = true
+    return
+  }
+
   try {
+    await initI18n()
     await refreshI18n()
-    if (contextMenuInitializing) {
-      menuLanguageRefreshPending = true
-      return
+    for (const [id, key] of MENU_TITLES) {
+      if (!activeMenuIds.has(id)) continue
+      await runContextMenuOperation((callback) => chrome.contextMenus.update(id, {
+        title: t(key)
+      }, callback))
     }
-    await runContextMenuOperation((callback) => chrome.contextMenus.update(MENU_ID, {
-      title: t('collectImage')
-    }, callback))
   } catch (error) {
-    console.error('Unable to update image collection menu language:', error)
+    console.error('Unable to update context menu language:', error)
   }
 }
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && Object.prototype.hasOwnProperty.call(changes, LANGUAGE_KEY)) {
+  if (area !== 'local') return
+  if (Object.prototype.hasOwnProperty.call(changes, LANGUAGE_KEY)) {
     refreshContextMenuLanguage()
+  }
+  if (Object.prototype.hasOwnProperty.call(changes, 'context_menu_options')) {
+    rebuildContextMenu()
   }
 })
 
@@ -109,19 +143,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 })
 
 chrome.runtime.onInstalled.addListener(() => {
-  createContextMenu()
+  rebuildContextMenu()
 })
 
 chrome.runtime.onStartup.addListener(() => {
-  createContextMenu()
+  rebuildContextMenu()
 })
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId !== MENU_ID) return
-  const targetUrl = pickTargetUrl(info, tab)
-  if (!targetUrl) return
+  if (info.menuItemId === SAVE_MENU_ID) {
+    const targetUrl = pickTargetUrl(info, tab)
+    if (targetUrl) await addImageIfNotExists(targetUrl)
+    return
+  }
 
-  await addImageIfNotExists(targetUrl)
+  if (info.menuItemId !== PARSE_MENU_ID) return
+  if (!tab || !tab.id) return
+
+  try {
+    const items = await parseTabImages(tab.id)
+    await setParseCandidates({
+      sourceUrl: typeof tab.url === 'string' ? tab.url : '',
+      createdAt: Date.now(),
+      items
+    })
+    await chrome.tabs.create({ url: chrome.runtime.getURL('pages/parse.html') })
+  } catch (error) {
+    console.error('Unable to parse page from context menu:', error)
+  }
 })
 
 refreshContextMenuLanguage()

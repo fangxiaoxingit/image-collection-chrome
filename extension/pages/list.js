@@ -1,22 +1,21 @@
 import {
   clearAll,
+  DOWNLOAD_BASE_DIR_KEY,
+  DOWNLOAD_QUERY_KEY,
   getDownloadBaseDir,
   getDownloadQueryParam,
   getDateGroupPeriod,
   getList,
   removeById,
   removeByIds,
-  setDownloadBaseDir,
-  setDownloadQueryParam,
   setDateGroupPeriod,
   setAllSelected,
-  setList,
   setSelectedById,
   setSelectedByIds
 } from '../utils/storage.js'
-import { batchDownload } from '../utils/download.js'
+import { batchDownload, buildDownloadFolder } from '../utils/download.js'
 import { groupImagesByDate } from '../utils/date-groups.js'
-import { bindLanguageSelector, getLanguage, initI18n, t, translatePage } from '../utils/i18n.js'
+import { getLanguage, initI18n, t, translatePage } from '../utils/i18n.js'
 
 const state = {
   list: [],
@@ -24,8 +23,7 @@ const state = {
   groupPeriod: 'day',
   queryParam: 'format=jpg&name=large',
   downloadBaseDir: '',
-  previewIndex: -1,
-  modalMode: null
+  previewIndex: -1
 }
 
 let selectionUpdates = Promise.resolve()
@@ -43,24 +41,17 @@ const elements = {
   batchDelete: document.getElementById('batchDelete'),
   sendMail: document.getElementById('sendMail'),
   clear: document.getElementById('clear'),
-  moreActions: document.getElementById('moreActions'),
-  usageGuide: document.getElementById('usageGuide'),
+  openParse: document.getElementById('openParse'),
+  openSettings: document.getElementById('openSettings'),
   modalOverlay: document.getElementById('modalOverlay'),
   modalTitle: document.getElementById('modalTitle'),
   modalClose: document.getElementById('modalClose'),
   modalDownload: document.getElementById('modalDownload'),
   modalDelete: document.getElementById('modalDelete'),
-  modalText: document.getElementById('modalText'),
-  modalConfig: document.getElementById('modalConfig'),
   modalImageWrap: document.getElementById('modalImageWrap'),
   modalImage: document.getElementById('modalImage'),
   modalPrev: document.getElementById('modalPrev'),
-  modalNext: document.getElementById('modalNext'),
-  configDownloadDir: document.getElementById('configDownloadDir'),
-  configQueryParam: document.getElementById('configQueryParam'),
-  exportJson: document.getElementById('exportJson'),
-  importJson: document.getElementById('importJson'),
-  importJsonFile: document.getElementById('importJsonFile')
+  modalNext: document.getElementById('modalNext')
 }
 
 function shortenUrl(url) {
@@ -121,39 +112,16 @@ function closeModal() {
   elements.modalImage.removeAttribute('src')
 }
 
-function setModalMode(mode) {
-  state.modalMode = mode
-  const isGuide = mode === 'guide'
-  const isImage = mode === 'image'
-  const isConfig = mode === 'config'
-
-  elements.modalText.classList.toggle('is-hidden', !isGuide)
-  elements.modalConfig.classList.toggle('is-hidden', !isConfig)
-  elements.modalImageWrap.classList.toggle('is-hidden', !isImage)
-  elements.modalDownload.classList.toggle('is-hidden', !isImage)
-  elements.modalDelete.classList.toggle('is-hidden', !isImage)
-  elements.modalPrev.classList.toggle('is-hidden', !isImage)
-  elements.modalNext.classList.toggle('is-hidden', !isImage)
-}
-
-function syncConfigInputsFromState() {
-  elements.configQueryParam.value = state.queryParam
-  elements.configDownloadDir.value = state.downloadBaseDir
-}
-
-function openGuideModal() {
-  state.previewIndex = -1
-  elements.modalTitle.textContent = t('downloadGuideTitle')
-  setModalMode('guide')
-  setModalVisible(true)
-}
-
-function openMoreModal() {
-  state.previewIndex = -1
-  elements.modalTitle.textContent = t('moreActions')
-  syncConfigInputsFromState()
-  setModalMode('config')
-  setModalVisible(true)
+function showImageModalControls() {
+  for (const node of [
+    elements.modalImageWrap,
+    elements.modalDownload,
+    elements.modalDelete,
+    elements.modalPrev,
+    elements.modalNext
+  ]) {
+    node.classList.remove('is-hidden')
+  }
 }
 
 function getCurrentPreviewItem() {
@@ -177,7 +145,7 @@ function openImageModalByIndex(index) {
   elements.modalTitle.textContent = t('imagePreviewTitle', { index: index + 1, count: state.viewList.length })
   elements.modalImage.src = item.url
   elements.modalImage.alt = t('previewImageAlt')
-  setModalMode('image')
+  showImageModalControls()
   updatePreviewNavState()
   setModalVisible(true)
 }
@@ -212,7 +180,7 @@ async function handlePreviewDownload() {
   const result = await batchDownload([item], {
     concurrency: 1,
     queryParamOverride: state.queryParam,
-    folder: buildDownloadFolder()
+    folder: buildDownloadFolder(state.downloadBaseDir)
   })
 
   if (result.successCount > 0) {
@@ -435,233 +403,10 @@ async function loadSettings() {
   state.downloadBaseDir = downloadBaseDir
   state.groupPeriod = groupPeriod
   elements.dateGrouping.value = groupPeriod
-  syncConfigInputsFromState()
 }
 
 async function handleSelectAll(selected) {
   await updateSelection(() => setAllSelected(selected))
-}
-
-function normalizeQueryParamValue(value) {
-  if (typeof value !== 'string') return 'format=jpg&name=large'
-  return value.trim().replace(/^\?+/, '')
-}
-
-function normalizeDownloadDirValue(value) {
-  if (typeof value !== 'string') return ''
-  return value
-    .trim()
-    .replace(/\\/g, '/')
-    .replace(/^\/+/, '')
-    .replace(/\/+$/, '')
-}
-
-let configSaveRevision = 0
-
-async function persistConfigFromInputs() {
-  const revision = ++configSaveRevision
-  const queryInput = elements.configQueryParam.value
-  const dirInput = elements.configDownloadDir.value
-  const nextQuery = normalizeQueryParamValue(queryInput)
-  const nextDir = normalizeDownloadDirValue(dirInput)
-
-  const [savedQuery, savedDir] = await Promise.all([
-    setDownloadQueryParam(nextQuery),
-    setDownloadBaseDir(nextDir)
-  ])
-
-  if (revision !== configSaveRevision) return
-
-  state.queryParam = savedQuery
-  state.downloadBaseDir = savedDir
-  if (elements.configQueryParam.value === queryInput) {
-    elements.configQueryParam.value = savedQuery
-  }
-  if (elements.configDownloadDir.value === dirInput) {
-    elements.configDownloadDir.value = savedDir
-  }
-}
-
-function createFallbackId() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID()
-  }
-
-  return `${Date.now()}_${Math.random().toString(16).slice(2)}`
-}
-
-function normalizeImportedImage(item) {
-  if (!item || typeof item !== 'object') return null
-  if (typeof item.url !== 'string' || item.url.trim() === '') return null
-
-  return {
-    id: typeof item.id === 'string' && item.id ? item.id : createFallbackId(),
-    url: item.url.trim(),
-    preview: typeof item.preview === 'string' && item.preview ? item.preview : item.url.trim(),
-    createdAt: typeof item.createdAt === 'number' ? item.createdAt : Date.now(),
-    selected: Boolean(item.selected)
-  }
-}
-
-function unpackImportPayload(payload) {
-  if (Array.isArray(payload)) {
-    return { images: payload, settings: {} }
-  }
-
-  if (!payload || typeof payload !== 'object') {
-    return { images: [], settings: {} }
-  }
-
-  const data = payload.data && typeof payload.data === 'object' ? payload.data : {}
-  const images =
-    (Array.isArray(data.images) && data.images) ||
-    (Array.isArray(payload.images) && payload.images) ||
-    (Array.isArray(data.list) && data.list) ||
-    (Array.isArray(payload.list) && payload.list) ||
-    []
-
-  const settings =
-    (data.settings && typeof data.settings === 'object' && data.settings) ||
-    (payload.settings && typeof payload.settings === 'object' && payload.settings) ||
-    {}
-
-  return { images, settings }
-}
-
-function mergeImportedImages(importedImages) {
-  const merged = state.list.slice()
-  const urlSet = new Set(merged.map((item) => item.url))
-  let addedCount = 0
-
-  for (const raw of importedImages) {
-    const normalized = normalizeImportedImage(raw)
-    if (!normalized) continue
-    if (urlSet.has(normalized.url)) continue
-
-    urlSet.add(normalized.url)
-    merged.unshift({ ...normalized, selected: false })
-    addedCount += 1
-  }
-
-  return { merged, addedCount }
-}
-
-async function applyImportedSettings(settings) {
-  if (!settings || typeof settings !== 'object') return false
-
-  let nextQuery = null
-  if (typeof settings.queryParam === 'string') nextQuery = settings.queryParam
-  if (nextQuery === null && typeof settings.query === 'string') nextQuery = settings.query
-
-  let nextDir = null
-  if (typeof settings.downloadBaseDir === 'string') nextDir = settings.downloadBaseDir
-  if (nextDir === null && typeof settings.downloadDir === 'string') nextDir = settings.downloadDir
-  if (nextDir === null && typeof settings.baseDir === 'string') nextDir = settings.baseDir
-
-  let changed = false
-
-  if (nextQuery !== null) {
-    state.queryParam = await setDownloadQueryParam(normalizeQueryParamValue(nextQuery))
-    changed = true
-  }
-
-  if (nextDir !== null) {
-    state.downloadBaseDir = await setDownloadBaseDir(normalizeDownloadDirValue(nextDir))
-    changed = true
-  }
-
-  if (changed) {
-    syncConfigInputsFromState()
-  }
-
-  return changed
-}
-
-function buildExportPayload() {
-  return {
-    version: 1,
-    type: 'image-collector-export',
-    exportedAt: new Date().toISOString(),
-    data: {
-      settings: {
-        queryParam: state.queryParam,
-        downloadBaseDir: state.downloadBaseDir
-      },
-      images: state.list.map((item) => ({
-        id: item.id,
-        url: item.url,
-        preview: item.preview,
-        createdAt: item.createdAt,
-        selected: Boolean(item.selected)
-      }))
-    }
-  }
-}
-
-async function handleExportJson() {
-  await persistConfigFromInputs()
-
-  const payload = buildExportPayload()
-  const jsonText = JSON.stringify(payload, null, 2)
-  const blob = new Blob([jsonText], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  const datePart = new Date().toISOString().slice(0, 10)
-  link.href = url
-  link.download = `image-collector-${datePart}.json`
-  link.click()
-  URL.revokeObjectURL(url)
-}
-
-function triggerImportJson() {
-  elements.importJsonFile.click()
-}
-
-async function handleImportJsonFile(event) {
-  const file = event.target.files && event.target.files[0]
-  if (!file) return
-
-  try {
-    const text = await file.text()
-    const parsed = JSON.parse(text)
-    const { images, settings } = unpackImportPayload(parsed)
-    const { merged, addedCount } = mergeImportedImages(images)
-
-    if (addedCount > 0) {
-      state.list = await setList(merged)
-      renderList()
-    }
-
-    const settingsChanged = await applyImportedSettings(settings)
-
-    if (addedCount === 0 && !settingsChanged) {
-      alert(t('importNoChanges'))
-    } else {
-      alert(t(settingsChanged ? 'importCompletedWithSettings' : 'importCompleted', { count: addedCount }))
-    }
-  } catch (error) {
-    alert(t('importFailed', { error: String(error) }))
-  } finally {
-    event.target.value = ''
-  }
-}
-
-function getMonthFolder(date = new Date()) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  return `${year}-${month}`
-}
-
-function buildDownloadFolder() {
-  const monthFolder = getMonthFolder()
-  const baseDir = state.downloadBaseDir
-    .trim()
-    .replace(/\\/g, '/')
-    .replace(/^\/+/, '')
-    .replace(/\/+$/, '')
-
-  if (!baseDir) return monthFolder
-  return `${baseDir}/${monthFolder}`
 }
 
 async function handleBatchDownload() {
@@ -674,7 +419,7 @@ async function handleBatchDownload() {
   const result = await batchDownload(selectedItems, {
     concurrency: 3,
     queryParamOverride: state.queryParam,
-    folder: buildDownloadFolder()
+    folder: buildDownloadFolder(state.downloadBaseDir)
   })
   alert(t('downloadCompleted', { succeeded: result.successCount, failed: result.failCount }))
 }
@@ -763,40 +508,12 @@ function bindEvents() {
     handleRefresh()
   })
 
-  elements.usageGuide.addEventListener('click', () => {
-    openGuideModal()
+  elements.openParse.addEventListener('click', () => {
+    window.location.href = chrome.runtime.getURL('pages/parse.html')
   })
 
-  elements.moreActions.addEventListener('click', () => {
-    openMoreModal()
-  })
-
-  elements.configQueryParam.addEventListener('change', () => {
-    persistConfigFromInputs()
-  })
-
-  elements.configQueryParam.addEventListener('blur', () => {
-    persistConfigFromInputs()
-  })
-
-  elements.configDownloadDir.addEventListener('change', () => {
-    persistConfigFromInputs()
-  })
-
-  elements.configDownloadDir.addEventListener('blur', () => {
-    persistConfigFromInputs()
-  })
-
-  elements.exportJson.addEventListener('click', () => {
-    handleExportJson()
-  })
-
-  elements.importJson.addEventListener('click', () => {
-    triggerImportJson()
-  })
-
-  elements.importJsonFile.addEventListener('change', (event) => {
-    handleImportJsonFile(event)
+  elements.openSettings.addEventListener('click', () => {
+    window.location.href = chrome.runtime.getURL('pages/settings.html')
   })
 
   elements.modalClose.addEventListener('click', () => {
@@ -844,9 +561,7 @@ function localizePage() {
     section.querySelector('.date-group-title').textContent = group.label
     section.querySelector('.date-group-count').textContent = t('groupImageCount', { count: group.items.length })
   }
-  if (state.modalMode === 'guide') elements.modalTitle.textContent = t('downloadGuideTitle')
-  if (state.modalMode === 'config') elements.modalTitle.textContent = t('moreActions')
-  if (state.modalMode === 'image' && state.previewIndex >= 0) {
+  if (state.previewIndex >= 0) {
     elements.modalTitle.textContent = t('imagePreviewTitle', {
       index: state.previewIndex + 1,
       count: state.viewList.length
@@ -857,8 +572,17 @@ function localizePage() {
   panel.scrollLeft = panelScrollLeft
 }
 
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local') return
+  if (Object.prototype.hasOwnProperty.call(changes, DOWNLOAD_QUERY_KEY)) {
+    state.queryParam = changes[DOWNLOAD_QUERY_KEY].newValue ?? state.queryParam
+  }
+  if (Object.prototype.hasOwnProperty.call(changes, DOWNLOAD_BASE_DIR_KEY)) {
+    state.downloadBaseDir = changes[DOWNLOAD_BASE_DIR_KEY].newValue ?? state.downloadBaseDir
+  }
+})
+
 await initI18n(localizePage)
-bindLanguageSelector(document.getElementById('languageSelect'))
 
 closeModal()
 bindEvents()

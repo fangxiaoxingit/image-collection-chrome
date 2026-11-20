@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title data-i18n="settingsPageTitle">设置 - Image Collector</title>
+    <link rel="stylesheet" href="./settings.css" />
+  </head>
+  <body>
+    <div class="settings-page">
+      <header class="settings-header">
+        <img src="../assets/logo.png" alt="Image Collector" data-i18n-alt="extensionName" class="brand-logo" />
+        <div class="header-text">
+          <h1 data-i18n="extensionName">Image Collector</h1>
+          <p data-i18n="settingsSubtitle">管理右键菜单、下载、语言与数据</p>
+        </div>
+        <button id="backToList" class="btn btn-ghost" type="button" data-i18n="backToList">返回收集列表</button>
+      </header>
+
+      <main class="settings-main">
+        <section class="settings-section">
+          <div class="section-heading">
+            <h2 data-i18n="menuSettings">右键菜单</h2>
+            <p class="section-hint" data-i18n="menuSettingsHint">开启后在网页右键菜单中显示对应入口，关闭后立即生效。</p>
+          </div>
+          <label class="switch-row" for="menuCollectImage">
+            <span class="switch-text">
+              <strong data-i18n="collectImage">收集图片</strong>
+              <small data-i18n="menuCollectHint">收集右键点击的图片地址，按完整 URL 去重。</small>
+            </span>
+            <input id="menuCollectImage" type="checkbox" />
+          </label>
+          <label class="switch-row" for="menuParsePage">
+            <span class="switch-text">
+              <strong data-i18n="parsePage">解析页面</strong>
+              <small data-i18n="menuParseHint">提取当前页面中较大的图片，打开候选页供你挑选。</small>
+            </span>
+            <input id="menuParsePage" type="checkbox" />
+          </label>
+        </section>
+
+        <section class="settings-section">
+          <div class="section-heading">
+            <h2 data-i18n="downloadSettings">下载设置</h2>
+            <p class="section-hint" data-i18n="downloadSettingsHint">修改后自动保存，下次下载生效。</p>
+          </div>
+          <div class="config-grid">
+            <label class="config-field" for="configDownloadDir">
+              <span data-i18n="downloadDirectory">下载目录</span>
+              <input id="configDownloadDir" type="text" placeholder="留空=系统下载目录" data-i18n-placeholder="downloadDirectoryPlaceholder" />
+            </label>
+            <label class="config-field" for="configQueryParam">
+              <span data-i18n="urlParameters">URL 参数</span>
+              <input id="configQueryParam" type="text" placeholder="format=jpg&name=large" />
+            </label>
+          </div>
+          <p class="config-tip" data-i18n="urlParametersHint">带签名参数的图片链接建议留空，避免替换原参数导致下载失败。</p>
+        </section>
+
+        <section class="settings-section">
+          <div class="section-heading">
+            <h2 data-i18n="dataManagement">数据管理</h2>
+            <p class="section-hint" data-i18n="dataManagementHint">数据只保存在当前浏览器，不会上传。</p>
+          </div>
+          <div class="config-row">
+            <button id="exportJson" class="btn" type="button" data-i18n="exportJson">导出 JSON</button>
+            <button id="importJson" class="btn" type="button" data-i18n="importJson">导入 JSON</button>
+            <input id="importJsonFile" type="file" accept="application/json,.json" hidden />
+          </div>
+          <p class="config-tip" data-i18n="importJsonHint">支持导入本插件导出的 JSON，也兼容仅图片数组格式。</p>
+        </section>
+
+        <section class="settings-section">
+          <div class="section-heading">
+            <h2 data-i18n="language">语言</h2>
+          </div>
+          <label class="language-control" for="languageSelect">
+            <span data-i18n="languageMode">界面语言</span>
+            <select id="languageSelect" data-language-select>
+              <option value="auto" data-i18n="languageAuto">跟随浏览器</option>
+              <option value="zh-CN" data-i18n="languageChinese">简体中文</option>
+              <option value="en" data-i18n="languageEnglish">English</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="settings-section">
+          <div class="section-heading">
+            <h2 data-i18n="aboutTitle">插件说明</h2>
+            <p class="section-hint" data-i18n="aboutText">Image Collector 用于收集、预览和批量下载网页图片。</p>
+          </div>
+          <ul class="about-list">
+            <li data-i18n="aboutFeatureCollect">右键收集单张图片，或解析页面后勾选多张添加。</li>
+            <li data-i18n="aboutFeatureManage">收集列表支持大图预览、日期分组、批量下载与删除。</li>
+            <li data-i18n="aboutFeatureBackup">数据保存在本地扩展存储，可用 JSON 导入导出备份。</li>
+            <li data-i18n="aboutFeaturePrivacy">不上传采集记录；预览和下载会访问图片原站。</li>
+          </ul>
+
+          <h3 class="subsection-title" data-i18n="downloadGuideTitle">下载设置说明</h3>
+          <ol class="guide-list">
+            <li><span data-i18n="guideOpenDownloads">在浏览器地址栏打开</span> <code>chrome://settings/downloads</code><span data-i18n="guideSentenceEnd">。</span></li>
+            <li data-i18n="guideDisablePrompt">关闭“下载前询问每个文件的保存位置（Ask where to save each file before downloading）”。</li>
+            <li><span data-i18n="guideDownloadFolderBefore">在本页“下载目录”填写子目录（例如</span> <code>image-collector</code><span data-i18n="guideDownloadFolderAfter">）；留空就使用系统默认下载目录。</span></li>
+            <li><span data-i18n="guideOpenExtensions">打开</span> <code>chrome://extensions/</code><span data-i18n="guideReloadExtension">，点击本插件“重新加载”后再测试下载。</span></li>
+          </ol>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="./settings.js"></script>
+  </body>
+</html>

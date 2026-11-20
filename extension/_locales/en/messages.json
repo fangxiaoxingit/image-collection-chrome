@@ -216,7 +216,7 @@
     "message": "Turn off “Ask where to save each file before downloading”."
   },
   "guideDownloadFolderBefore": {
-    "message": "Return to the extension, open “More Options”, and enter a subfolder under “Download directory” (for example,"
+    "message": "Under “Download settings” on this page, enter a subfolder in “Download directory” (for example,"
   },
   "guideDownloadFolderAfter": {
     "message": "); leave it blank to use the default download folder."
@@ -277,5 +277,68 @@
   },
   "batchDeleteConfirm": {
     "message": "Delete the selected images ({count})?"
+  },
+  "settings": {
+    "message": "Settings"
+  },
+  "settingsPageTitle": {
+    "message": "Settings - Image Collector"
+  },
+  "settingsSubtitle": {
+    "message": "Manage context menus, downloads, language and data"
+  },
+  "backToList": {
+    "message": "Back to Collection"
+  },
+  "menuSettings": {
+    "message": "Context Menu"
+  },
+  "menuSettingsHint": {
+    "message": "Show these entries in the browser context menu. Changes apply immediately."
+  },
+  "menuCollectHint": {
+    "message": "Collect the image under the cursor. Duplicates are detected by full URL."
+  },
+  "menuParseHint": {
+    "message": "Find larger images on the current page and open a candidate list."
+  },
+  "downloadSettings": {
+    "message": "Download Settings"
+  },
+  "downloadSettingsHint": {
+    "message": "Changes save automatically and apply to the next download."
+  },
+  "urlParametersHint": {
+    "message": "Leave blank for signed image URLs to avoid replacing their original parameters."
+  },
+  "dataManagement": {
+    "message": "Data Management"
+  },
+  "dataManagementHint": {
+    "message": "Data stays in this browser and is never uploaded."
+  },
+  "languageMode": {
+    "message": "Interface language"
+  },
+  "aboutTitle": {
+    "message": "About This Extension"
+  },
+  "aboutText": {
+    "message": "Image Collector helps you collect, preview and batch-download images from web pages."
+  },
+  "aboutFeatureCollect": {
+    "message": "Right-click to collect a single image, or parse a page and pick several."
+  },
+  "aboutFeatureManage": {
+    "message": "The collection list supports previews, date grouping, batch downloads and deletion."
+  },
+  "aboutFeatureBackup": {
+    "message": "Data is stored locally and can be backed up via JSON import and export."
+  },
+  "aboutFeaturePrivacy": {
+    "message": "Collection records are never uploaded; previews and downloads contact the original image sites."
+  },
+  "settingsSaveFailed": {
+    "message": "Could not save settings: {error}"
   }
 }

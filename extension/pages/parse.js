@@ -1,9 +1,7 @@
-import { addImagesIfNotExists, getParseCandidates, setParseCandidates } from '../utils/storage.js'
-import { bindLanguageSelector, initI18n, t, translatePage } from '../utils/i18n.js'
-
-const MIN_WIDTH = 120
-const MIN_HEIGHT = 120
-const MIN_AREA = 120 * 120
+import { batchDownload, buildDownloadFolder } from '../utils/download.js'
+import { MIN_AREA, MIN_HEIGHT, MIN_WIDTH, collectImagesFromDocument, mergeImageCandidates } from '../utils/page-images.js'
+import { addImagesIfNotExists, getDownloadBaseDir, getDownloadQueryParam, getParseCandidates, setParseCandidates } from '../utils/storage.js'
+import { initI18n, t, translatePage } from '../utils/i18n.js'
 
 const state = {
   sourceUrl: '',
@@ -19,8 +17,10 @@ const elements = {
   selectAll: document.getElementById('selectAll'),
   unselectAll: document.getElementById('unselectAll'),
   addSelected: document.getElementById('addSelected'),
+  downloadSelected: document.getElementById('downloadSelected'),
   reload: document.getElementById('reload'),
   openList: document.getElementById('openList'),
+  openSettings: document.getElementById('openSettings'),
   parseForm: document.getElementById('parseForm'),
   parseUrlInput: document.getElementById('parseUrlInput'),
   parseByUrl: document.getElementById('parseByUrl'),
@@ -261,6 +261,31 @@ async function addSelected() {
   alert(t('addCompleted', { added: result.addedCount, skipped: result.skippedCount }))
 }
 
+async function downloadSelected() {
+  const selectedItems = state.items.filter((item) => item.selected)
+  if (selectedItems.length === 0) {
+    alert(t('selectImageFirst'))
+    return
+  }
+
+  const [queryParam, downloadBaseDir] = await Promise.all([
+    getDownloadQueryParam(),
+    getDownloadBaseDir()
+  ])
+
+  elements.downloadSelected.disabled = true
+  try {
+    const result = await batchDownload(selectedItems, {
+      concurrency: 3,
+      queryParamOverride: queryParam,
+      folder: buildDownloadFolder(downloadBaseDir)
+    })
+    alert(t('downloadCompleted', { succeeded: result.successCount, failed: result.failCount }))
+  } finally {
+    elements.downloadSelected.disabled = false
+  }
+}
+
 function openList() {
   chrome.tabs.create({ url: chrome.runtime.getURL('pages/list.html') })
 }
@@ -271,55 +296,6 @@ function normalizeInputUrl(value) {
 
   if (/^https?:\/\//i.test(text)) return text
   return `https://${text}`
-}
-
-function collectImagesFromDocument(minWidth, minHeight, minArea) {
-  const result = []
-  const imgs = Array.from(document.querySelectorAll('img'))
-
-  for (const img of imgs) {
-    const url = (img.currentSrc || img.src || '').trim()
-    if (!/^https?:\/\//i.test(url)) continue
-
-    const width = Number(img.naturalWidth || img.width || img.clientWidth || 0)
-    const height = Number(img.naturalHeight || img.height || img.clientHeight || 0)
-
-    if (width < minWidth || height < minHeight) continue
-    if (width * height < minArea) continue
-
-    result.push({
-      url,
-      width,
-      height,
-      alt: typeof img.alt === 'string' ? img.alt : ''
-    })
-  }
-
-  return result
-}
-
-function mergeImageCandidates(frameResults) {
-  const mergedByUrl = new Map()
-
-  for (const frameResult of frameResults) {
-    const items = Array.isArray(frameResult.result) ? frameResult.result : []
-    for (const item of items) {
-      if (!item || typeof item.url !== 'string') continue
-      if (!mergedByUrl.has(item.url)) {
-        mergedByUrl.set(item.url, item)
-        continue
-      }
-
-      const prev = mergedByUrl.get(item.url)
-      if ((item.width || 0) * (item.height || 0) > (prev.width || 0) * (prev.height || 0)) {
-        mergedByUrl.set(item.url, item)
-      }
-    }
-  }
-
-  return Array.from(mergedByUrl.values()).sort(
-    (a, b) => (b.width || 0) * (b.height || 0) - (a.width || 0) * (a.height || 0)
-  )
 }
 
 async function waitTabComplete(tabId, timeoutMs = 18000) {
@@ -484,7 +460,6 @@ function localizePage() {
 }
 
 await initI18n(localizePage)
-bindLanguageSelector(document.getElementById('languageSelect'))
 
 elements.selectAll.addEventListener('click', () => {
   setAllSelected(true)
@@ -498,12 +473,20 @@ elements.addSelected.addEventListener('click', () => {
   addSelected()
 })
 
+elements.downloadSelected.addEventListener('click', () => {
+  downloadSelected()
+})
+
 elements.reload.addEventListener('click', () => {
   loadCandidates()
 })
 
 elements.openList.addEventListener('click', () => {
   openList()
+})
+
+elements.openSettings.addEventListener('click', () => {
+  window.location.href = chrome.runtime.getURL('pages/settings.html')
 })
 
 elements.parseForm.addEventListener('submit', (event) => {

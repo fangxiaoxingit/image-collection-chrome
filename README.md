@@ -8,8 +8,8 @@ A Chrome extension for collecting, previewing, and downloading web images in bat
 
 ## Features
 
-- **Image collection**: Collect from the context menu, parse the current tab, or enter a URL to parse.
-- **Candidate selection**: View image dimensions and file sizes, then select images to add to your collection.
+- **Image collection**: Collect from the context menu, parse the current page via the context menu, parse the current tab, or enter a URL to parse. Both context menu entries can be toggled independently in Settings and are enabled by default.
+- **Candidate selection**: View image dimensions and file sizes, then select images to add to your collection or download directly without saving them to the collection.
 - **Image management**: Preview full-size images, move to the previous or next image, select all, and delete individual images or multiple images at once.
 - **Date grouping**: Browse images by day, week, or month, with the most recently added images first.
 - **Batch downloads**: Save images in year-month folders, with a customizable subfolder and download URL parameters.
@@ -32,7 +32,7 @@ To update, extract the new version, reload the extension, and refresh any open e
 
 ### Interface language
 
-The popup, collection list, and parsing page each have a language selector with **Use browser language**, **Simplified Chinese**, and **English**. Automatic mode is the default: it checks your browser's preferred languages in order and uses the first supported match. `zh` / `zh-*` selects Simplified Chinese, and `en` / `en-*` selects English. If none match, it uses English. If the browser does not provide a preferred-language list, it checks the browser's interface language instead.
+The popup and settings page each have a language selector with **Use browser language**, **Simplified Chinese**, and **English**. Automatic mode is the default: it checks your browser's preferred languages in order and uses the first supported match. `zh` / `zh-*` selects Simplified Chinese, and `en` / `en-*` selects English. If none match, it uses English. If the browser does not provide a preferred-language list, it checks the browser's interface language instead.
 
 The Chinese translation is **Simplified Chinese**; Traditional Chinese browser preferences also select this translation. A manual choice is saved in the current browser's local extension storage and updates open extension pages and the **Collect Image** context menu. Automatic mode checks again when a page is reopened or the browser languages change.
 
@@ -41,12 +41,14 @@ Switching languages updates interface text, the body of prompts, and date format
 ### Collect images
 
 - **Single image**: Right-click an image on a web page and choose **Collect Image (收集图片)**.
+- **Parse from the context menu**: Right-click a blank area of a web page and choose **Parse Page (解析页面)**. Select images on the candidate page, then click **Add Selected (添加已选)**. This entry is enabled by default and can be turned off in Settings.
 - **Current page**: Click the extension icon → **Parse Page (解析页面)**. Select images on the candidate page, then click **Add Selected (添加已选)**.
 - **Specific URL**: Enter a URL on the parsing page and click **Parse URL (解析网址)**, then select and add images. Parsing temporarily opens a background tab and closes it when finished.
+- **Download directly**: On the parsing page, select images and click **Download (下载)**. Images are saved using the current download directory and URL parameters without being added to the collection. The **Settings (设置)** button on the parsing page opens the settings page.
 
 ### Manage and download
 
-Click the extension icon → **Collection (收集列表)**. Select images to download or delete them in batches, or click an image to open a full-size preview. Use the left and right arrow keys to switch images, and press `Esc` to close the preview.
+Click the extension icon → **Collection (收集列表)**. Select images to download or delete them in batches, or click an image to open a full-size preview. Use the left and right arrow keys to switch images, and press `Esc` to close the preview. The **Parse Page (解析页面)** button to the left of **Settings** at the top of the list opens the parsing page directly.
 
 **Date grouping (日期排序)** at the top groups images by day by default. You can switch to weekly or monthly grouping, and the extension remembers your last selection. Dates use your browser's local time zone, and weeks begin on Monday. Both groups and images within each group are ordered with the most recently added first.
 
@@ -54,9 +56,19 @@ Each group header has **Select All** and **Deselect All** buttons on the right. 
 
 **Send Email (发送邮件)** opens your default email client with the selected image URLs in the message body; you send the email yourself. **Refresh (刷新)** reloads the locally stored list and settings.
 
+### Settings page
+
+The **Settings (设置)** button at the top of the collection list opens one page containing:
+
+- **Context Menu**: Independent switches for **Collect Image** and **Parse Page**, both enabled by default. Changes apply immediately.
+- **Download settings**: Download directory and URL parameters, saved automatically.
+- **Data management**: JSON import and export.
+- **Language**: Interface language selection.
+- **About**: Feature overview and batch download setup steps.
+
 ### Download settings
 
-Click **More Options (更多功能)** in the collection list:
+Click **Settings (设置)** in the collection list, then open **Download settings**:
 
 | Setting | Description |
 | --- | --- |
@@ -80,11 +92,11 @@ Batch downloads save images as separate files and do not create a ZIP archive. T
 
 Collection records, parsing candidates, and settings are saved in the current browser's local extension storage and are not uploaded to a project server. Previews, file size checks, and downloads make requests to the original image hosts. Parsing a specific URL visits the corresponding page.
 
-JSON exports include complete image URLs and download settings. You can restore them by importing the file through **More Options (更多功能)**. Before sharing an export, check whether any URLs contain private access parameters.
+JSON exports include complete image URLs, download settings, and context menu switches. You can restore them through **Data management** on the settings page. Before sharing an export, check whether any URLs contain private access parameters.
 
 | Permission | Purpose |
 | --- | --- |
-| `contextMenus` | Provides the Collect Image (收集图片) context menu item. |
+| `contextMenus` | Provides the Collect Image (收集图片) and Parse Page (解析页面) context menu items, with toggles. |
 | `storage` | Saves collection records, parsing candidates, and settings. |
 | `downloads` | Starts image downloads. |
 | `tabs` | Retrieves page information and opens the collection page and temporary parsing tabs. |
@@ -114,14 +126,16 @@ extension/
 ├── assets/             # Icons
 ├── pages/
 │   ├── popup.*         # Extension entry menu
-│   ├── list.*          # Collection list, previews, and settings
-│   └── parse.*         # Page parsing and candidate selection
-└── utils/              # Local storage, downloads, and helper utilities
+│   ├── list.*          # Collection list and previews
+│   ├── parse.*         # Page parsing and candidate selection
+│   └── settings.*      # Context menu, downloads, language, data, and about
+└── utils/              # Local storage, downloads, page parsing, and helpers
+    └── page-images.js  # Shared image extraction for popup and context menu
 ```
 
 After editing the code, click **Reload** for the extension at `chrome://extensions/` and refresh any open extension pages. Use DevTools to debug page interactions; inspect background logs through the Service Worker debugging link in the extension's details.
 
-Before submitting changes, we recommend checking context menu deduplication, page parsing, adding candidates, downloads, deletion, and JSON import / export, along with both interface languages, automatic selection, synchronization across pages, and saved language choices.
+Before submitting changes, we recommend checking context menu deduplication, context menu page parsing, both context menu switches, page parsing, adding candidates, downloads, deletion, and JSON import / export, along with both interface languages, automatic selection, synchronization across pages, and saved language choices.
 
 ## Automated releases
 

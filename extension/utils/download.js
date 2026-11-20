@@ -51,6 +51,16 @@ export function replaceUrlQuery(url, queryParamOverride) {
   }
 }
 
+export function buildDownloadFolder(baseDir = '', date = new Date()) {
+  const monthFolder = getMonthFolder(date)
+  const normalized = String(baseDir || '')
+    .trim()
+    .replace(/\\/g, '/')
+    .replace(/^\/+/, '')
+    .replace(/\/+$/, '')
+  return normalized ? `${normalized}/${monthFolder}` : monthFolder
+}
+
 export async function downloadImage(url, filename) {
   return chrome.downloads.download({
     url,

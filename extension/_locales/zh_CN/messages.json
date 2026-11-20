@@ -216,7 +216,7 @@
     "message": "关闭“下载前询问每个文件的保存位置（Ask where to save each file before downloading）”。"
   },
   "guideDownloadFolderBefore": {
-    "message": "回到插件页面，点“更多功能”，在“下载目录”填写子目录（例如"
+    "message": "在本页“下载设置”中，于“下载目录”填写子目录（例如"
   },
   "guideDownloadFolderAfter": {
     "message": "）；留空就使用系统默认下载目录。"
@@ -277,5 +277,68 @@
   },
   "batchDeleteConfirm": {
     "message": "确定删除选中的 {count} 张图片吗？"
+  },
+  "settings": {
+    "message": "设置"
+  },
+  "settingsPageTitle": {
+    "message": "设置 - Image Collector"
+  },
+  "settingsSubtitle": {
+    "message": "管理右键菜单、下载、语言与数据"
+  },
+  "backToList": {
+    "message": "返回收集列表"
+  },
+  "menuSettings": {
+    "message": "右键菜单"
+  },
+  "menuSettingsHint": {
+    "message": "开启后在网页右键菜单中显示对应入口，关闭后立即生效。"
+  },
+  "menuCollectHint": {
+    "message": "收集右键点击的图片地址，按完整 URL 去重。"
+  },
+  "menuParseHint": {
+    "message": "提取当前页面中较大的图片，打开候选页供你挑选。"
+  },
+  "downloadSettings": {
+    "message": "下载设置"
+  },
+  "downloadSettingsHint": {
+    "message": "修改后自动保存，下次下载生效。"
+  },
+  "urlParametersHint": {
+    "message": "带签名参数的图片链接建议留空，避免替换原参数导致下载失败。"
+  },
+  "dataManagement": {
+    "message": "数据管理"
+  },
+  "dataManagementHint": {
+    "message": "数据只保存在当前浏览器，不会上传。"
+  },
+  "languageMode": {
+    "message": "界面语言"
+  },
+  "aboutTitle": {
+    "message": "插件说明"
+  },
+  "aboutText": {
+    "message": "Image Collector 用于收集、预览和批量下载网页图片。"
+  },
+  "aboutFeatureCollect": {
+    "message": "右键收集单张图片，或解析页面后勾选多张添加。"
+  },
+  "aboutFeatureManage": {
+    "message": "收集列表支持大图预览、日期分组、批量下载与删除。"
+  },
+  "aboutFeatureBackup": {
+    "message": "数据保存在本地扩展存储，可用 JSON 导入导出备份。"
+  },
+  "aboutFeaturePrivacy": {
+    "message": "不上传采集记录；预览和下载会访问图片原站。"
+  },
+  "settingsSaveFailed": {
+    "message": "保存设置失败：{error}"
   }
 }

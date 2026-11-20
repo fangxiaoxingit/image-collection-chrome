@@ -17,8 +17,9 @@ RUNTIME_FILES = (
     'pages/list.html', 'pages/list.css', 'pages/list.js',
     'pages/parse.html', 'pages/parse.css', 'pages/parse.js',
     'pages/popup.html', 'pages/popup.css', 'pages/popup.js',
+    'pages/settings.html', 'pages/settings.css', 'pages/settings.js',
     'utils/storage.js', 'utils/download.js', 'utils/hash.js',
-    'utils/date-groups.js', 'utils/i18n.js',
+    'utils/date-groups.js', 'utils/i18n.js', 'utils/page-images.js',
     '_locales/en/messages.json', '_locales/zh_CN/messages.json',
 )
 

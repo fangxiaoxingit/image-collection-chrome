@@ -50,5 +50,6 @@ __pycache__/
 *.py[cod]
 
 # 其他
+.workbuddy/
 *.bak
 *.backup

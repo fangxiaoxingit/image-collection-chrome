@@ -2,7 +2,8 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 let moduleId = 0
-const menuId = 'image_collector_save_image'
+const SAVE_MENU_ID = 'image_collector_save_image'
+const PARSE_MENU_ID = 'image_collector_parse_page'
 const tick = () => new Promise((resolve) => setImmediate(resolve))
 
 async function createFixture(t, languages = ['en-US']) {
@@ -18,6 +19,8 @@ async function createFixture(t, languages = ['en-US']) {
   const errors = []
   const storageListeners = []
   const values = {}
+  const createdTabs = []
+  const scriptCalls = []
   let acceptedLanguages = languages
   let createCalls = 0
   let activeError
@@ -49,7 +52,10 @@ async function createFixture(t, languages = ['en-US']) {
     runtime,
     i18n: { getAcceptLanguages: async () => acceptedLanguages, getUILanguage: () => 'en-US' },
     storage: {
-      local: { get: async (key) => ({ [key]: values[key] }) },
+      local: {
+        async get(key) { return { [key]: values[key] } },
+        async set(update) { Object.assign(values, update) }
+      },
       onChanged: { addListener: (listener) => storageListeners.push(listener) }
     },
     contextMenus: {
@@ -74,19 +80,37 @@ async function createFixture(t, languages = ['en-US']) {
         })
         return options.id
       }
+    },
+    scripting: {
+      async executeScript(options) {
+        scriptCalls.push(options)
+        return [{ result: [{ url: 'https://example.com/photo.jpg', width: 400, height: 300, alt: 'photo' }] }]
+      }
+    },
+    tabs: {
+      async create(options) {
+        createdTabs.push(options)
+        return { id: 99, url: options.url }
+      }
     }
   }
-  globalThis.fetch = async (url) => ({
-    ok: true,
-    json: async () => ({ collectImage: { message: url.includes('/zh_CN/') ? '收集图片' : 'Collect Image' } })
-  })
+  globalThis.fetch = async (url) => {
+    const chinese = url.includes('/zh_CN/')
+    return {
+      ok: true,
+      json: async () => ({
+        collectImage: { message: chinese ? '收集图片' : 'Collect Image' },
+        parsePage: { message: chinese ? '解析页面' : 'Parse Page' }
+      })
+    }
+  }
   console.error = (...args) => { errors.push(args) }
   t.after(() => { globalThis.chrome = previousChrome; globalThis.fetch = previousFetch; console.error = previousError })
   const url = new URL('../extension/background.js', import.meta.url)
   url.searchParams.set('freshModule', String(++moduleId))
   await import(url.href)
   return {
-    menus, duplicates, unchecked, errors,
+    menus, duplicates, unchecked, errors, createdTabs, scriptCalls,
     get createCalls() { return createCalls },
     emit(name) { listeners[name]() },
     setLanguages(value) { acceptedLanguages = value },
@@ -95,8 +119,16 @@ async function createFixture(t, languages = ['en-US']) {
       values.ui_language = value
       for (const listener of storageListeners) listener({ ui_language: { oldValue, newValue: value } }, 'local')
     },
+    changeMenuOptions(value) {
+      const oldValue = values.context_menu_options
+      values.context_menu_options = value
+      for (const listener of storageListeners) listener({ context_menu_options: { oldValue, newValue: value } }, 'local')
+    },
     async notifyLanguageChange() {
       await new Promise((resolve) => listeners.message({ type: 'image_collector_language_changed' }, {}, resolve))
+    },
+    async click(menuItemId, tab = { id: 7, url: 'https://example.com/gallery' }) {
+      await listeners.click({ menuItemId, pageUrl: tab.url }, tab)
     },
     failNext(api) { failures.set(api, `fixture ${api} failure`) },
     async flush() {
@@ -106,33 +138,41 @@ async function createFixture(t, languages = ['en-US']) {
   }
 }
 
-test('overlapping install/startup callbacks never create a duplicate menu ID', { concurrency: false }, async (t) => {
+test('install and startup create both menus once with no duplicate or unchecked errors', { concurrency: false }, async (t) => {
   const fixture = await createFixture(t)
   fixture.emit('install')
   fixture.emit('startup')
   await fixture.flush()
-  assert.deepEqual(fixture.duplicates, [], 'both remove callbacks must not create the same persistent ID')
-  assert.equal(fixture.createCalls, 1)
-  assert.deepEqual([...fixture.menus.keys()], [menuId])
+  assert.deepEqual(fixture.duplicates, [])
+  assert.equal(fixture.createCalls, 2)
+  assert.deepEqual([...fixture.menus.keys()], [SAVE_MENU_ID, PARSE_MENU_ID])
+  assert.equal(fixture.menus.get(SAVE_MENU_ID).title, 'Collect Image')
+  assert.equal(fixture.menus.get(PARSE_MENU_ID).title, 'Parse Page')
+  assert.deepEqual(fixture.menus.get(PARSE_MENU_ID).contexts, ['page', 'frame', 'selection'])
   assert.deepEqual(fixture.unchecked, [])
 })
 
-test('menu follows browser language and manual changes update its existing ID', { concurrency: false }, async (t) => {
+test('language changes update existing titles without duplicating menus', { concurrency: false }, async (t) => {
   const fixture = await createFixture(t, ['zh-TW'])
   fixture.emit('install')
   await fixture.flush()
-  assert.equal(fixture.menus.get(menuId).title, '收集图片')
+  assert.equal(fixture.menus.get(SAVE_MENU_ID).title, '收集图片')
+  assert.equal(fixture.menus.get(PARSE_MENU_ID).title, '解析页面')
+
   fixture.changePreference('en')
   await fixture.flush()
-  assert.equal(fixture.menus.get(menuId).title, 'Collect Image')
-  assert.equal(fixture.createCalls, 1, 'changing language must update rather than duplicate the menu')
+  assert.equal(fixture.menus.get(SAVE_MENU_ID).title, 'Collect Image')
+  assert.equal(fixture.menus.get(PARSE_MENU_ID).title, 'Parse Page')
+  assert.equal(fixture.createCalls, 2, 'language changes must update rather than recreate menus')
+
   fixture.changePreference('auto')
   await fixture.flush()
-  assert.equal(fixture.menus.get(menuId).title, '收集图片')
+  assert.equal(fixture.menus.get(SAVE_MENU_ID).title, '收集图片')
+  assert.deepEqual(fixture.duplicates, [])
   assert.deepEqual(fixture.unchecked, [])
 })
 
-test('an open page can refresh an automatic menu after browser preferences change', { concurrency: false }, async (t) => {
+test('an open page can refresh automatic menu language after browser preferences change', { concurrency: false }, async (t) => {
   const fixture = await createFixture(t, ['zh-CN'])
   fixture.emit('install')
   await fixture.flush()
@@ -140,50 +180,79 @@ test('an open page can refresh an automatic menu after browser preferences chang
   const notification = fixture.notifyLanguageChange()
   await fixture.flush()
   await notification
-  assert.equal(fixture.menus.get(menuId).title, 'Collect Image')
+  assert.equal(fixture.menus.get(SAVE_MENU_ID).title, 'Collect Image')
+  assert.equal(fixture.menus.get(PARSE_MENU_ID).title, 'Parse Page')
   assert.deepEqual(fixture.duplicates, [])
   assert.deepEqual(fixture.unchecked, [])
 })
 
-test('sequential initialization still leaves one menu and no unchecked errors', { concurrency: false }, async (t) => {
+test('menu switches rebuild entries and both can be disabled', { concurrency: false }, async (t) => {
   const fixture = await createFixture(t)
   fixture.emit('install')
   await fixture.flush()
-  fixture.emit('startup')
+
+  fixture.changeMenuOptions({ collectImage: false, parsePage: true })
   await fixture.flush()
-  assert.deepEqual([...fixture.menus.keys()], [menuId])
+  assert.deepEqual([...fixture.menus.keys()], [PARSE_MENU_ID])
+
+  fixture.changeMenuOptions({ collectImage: true, parsePage: false })
+  await fixture.flush()
+  assert.deepEqual([...fixture.menus.keys()], [SAVE_MENU_ID])
+
+  fixture.changeMenuOptions({ collectImage: false, parsePage: false })
+  await fixture.flush()
+  assert.deepEqual([...fixture.menus.keys()], [])
+
+  fixture.changeMenuOptions({})
+  await fixture.flush()
+  assert.deepEqual([...fixture.menus.keys()], [SAVE_MENU_ID, PARSE_MENU_ID], 'missing options default to enabled')
   assert.deepEqual(fixture.duplicates, [])
   assert.deepEqual(fixture.unchecked, [])
 })
 
-test('removeAll failure is handled without creating a menu and can be retried', { concurrency: false }, async (t) => {
+test('parse menu click parses the active tab and opens the candidate page', { concurrency: false }, async (t) => {
+  const fixture = await createFixture(t)
+  fixture.emit('install')
+  await fixture.flush()
+
+  await fixture.click(PARSE_MENU_ID)
+
+  assert.equal(fixture.scriptCalls.length, 1)
+  assert.equal(fixture.scriptCalls[0].target.tabId, 7)
+  assert.deepEqual(fixture.createdTabs, [{ url: 'chrome-extension://fixture/pages/parse.html' }])
+  assert.deepEqual(fixture.unchecked, [])
+})
+
+test('removeAll and create failures are handled and retried on the next startup', { concurrency: false }, async (t) => {
   const fixture = await createFixture(t)
   fixture.failNext('removeAll')
   fixture.emit('install')
   await fixture.flush()
-  assert.equal(fixture.createCalls, 0, 'creation must stop when removal fails')
+  assert.equal(fixture.createCalls, 0)
   assert.equal(fixture.menus.size, 0)
   assert.deepEqual(fixture.unchecked, [])
-  assert.ok(fixture.errors.length > 0, 'removal failure should be reported')
+  assert.ok(fixture.errors.length > 0)
+
   fixture.emit('startup')
   await fixture.flush()
-  assert.deepEqual([...fixture.menus.keys()], [menuId])
-  assert.equal(fixture.createCalls, 1)
+  assert.deepEqual([...fixture.menus.keys()], [SAVE_MENU_ID, PARSE_MENU_ID])
+  assert.equal(fixture.createCalls, 2)
   assert.deepEqual(fixture.unchecked, [])
 })
 
-test('create failure is handled and the next initialization can retry', { concurrency: false }, async (t) => {
+test('a create failure stops initialization and can be retried', { concurrency: false }, async (t) => {
   const fixture = await createFixture(t)
   fixture.failNext('create')
   fixture.emit('install')
   await fixture.flush()
   assert.equal(fixture.menus.size, 0)
-  assert.deepEqual(fixture.unchecked, [], 'create callback must read runtime.lastError')
-  assert.ok(fixture.errors.length > 0, 'creation failure should be reported')
+  assert.deepEqual(fixture.unchecked, [])
+  assert.ok(fixture.errors.length > 0)
+
   fixture.emit('startup')
   await fixture.flush()
-  assert.deepEqual([...fixture.menus.keys()], [menuId])
-  assert.equal(fixture.createCalls, 2)
+  assert.deepEqual([...fixture.menus.keys()], [SAVE_MENU_ID, PARSE_MENU_ID])
+  assert.equal(fixture.createCalls, 3)
   assert.deepEqual(fixture.duplicates, [])
   assert.deepEqual(fixture.unchecked, [])
 })
