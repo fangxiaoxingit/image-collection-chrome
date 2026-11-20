@@ -32,7 +32,7 @@ To update, extract the new version, reload the extension, and refresh any open e
 
 ### Interface language
 
-The popup and settings page each have a language selector with **Use browser language**, **Simplified Chinese**, and **English**. Automatic mode is the default: it checks your browser's preferred languages in order and uses the first supported match. `zh` / `zh-*` selects Simplified Chinese, and `en` / `en-*` selects English. If none match, it uses English. If the browser does not provide a preferred-language list, it checks the browser's interface language instead.
+The settings page has a language selector with **Use browser language**, **Simplified Chinese**, and **English**. Automatic mode is the default: it checks your browser's preferred languages in order and uses the first supported match. `zh` / `zh-*` selects Simplified Chinese, and `en` / `en-*` selects English. If none match, it uses English. If the browser does not provide a preferred-language list, it checks the browser's interface language instead.
 
 The Chinese translation is **Simplified Chinese**; Traditional Chinese browser preferences also select this translation. A manual choice is saved in the current browser's local extension storage and updates open extension pages and the **Collect Image** context menu. Automatic mode checks again when a page is reopened or the browser languages change.
 

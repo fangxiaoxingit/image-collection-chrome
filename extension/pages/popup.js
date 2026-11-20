@@ -1,10 +1,11 @@
 import { parseTabImages } from '../utils/page-images.js'
 import { setParseCandidates } from '../utils/storage.js'
-import { bindLanguageSelector, initI18n, t, translatePage } from '../utils/i18n.js'
+import { initI18n, t, translatePage } from '../utils/i18n.js'
 
 const elements = {
   openList: document.getElementById('openList'),
-  parsePage: document.getElementById('parsePage')
+  parsePage: document.getElementById('parsePage'),
+  openSettings: document.getElementById('openSettings')
 }
 
 function getListPageUrl() {
@@ -15,8 +16,17 @@ function getParsePageUrl() {
   return chrome.runtime.getURL('pages/parse.html')
 }
 
+function getSettingsPageUrl() {
+  return chrome.runtime.getURL('pages/settings.html')
+}
+
 async function openListPage() {
   await chrome.tabs.create({ url: getListPageUrl() })
+  window.close()
+}
+
+async function openSettingsPage() {
+  await chrome.tabs.create({ url: getSettingsPageUrl() })
   window.close()
 }
 
@@ -47,7 +57,6 @@ async function parseCurrentPage() {
 }
 
 await initI18n(() => translatePage())
-bindLanguageSelector(document.getElementById('languageSelect'))
 
 elements.openList.addEventListener('click', () => {
   openListPage()
@@ -55,4 +64,8 @@ elements.openList.addEventListener('click', () => {
 
 elements.parsePage.addEventListener('click', () => {
   parseCurrentPage()
+})
+
+elements.openSettings.addEventListener('click', () => {
+  openSettingsPage()
 })
